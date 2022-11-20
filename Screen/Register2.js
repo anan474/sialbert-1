@@ -20,6 +20,7 @@ import {  Alert,
 
 import Svg, { Path } from 'react-native-svg';
 import axios from 'axios';
+import PhoneInput from "react-native-phone-input";
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CredentialsContext } from './../components/CredentialsContext';
@@ -43,6 +44,9 @@ export default function RegisterPage({ navigation, route }) {
   const [hideRePassword, setHideRePassword] = useState(true);
   const [message, setMessage] = useState();
   const [messageType, setMessageType] = useState();
+  const [no_hp, setNoHp] = useState('');
+  const [kontak_darurat, setKontakDarurat] = useState('');
+  const [alamat, setAlamat] = useState('');
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
 
@@ -58,43 +62,128 @@ export default function RegisterPage({ navigation, route }) {
       .required('Alamat wajib diisi!'),
   })
 
+  // const handleRegister = (credentials, setSubmitting) => {
+  //   axios({
+  //     url:'https://sialbert.000webhostapp.com/teknisi/api/register/create',
+  //     method:"POST",
+  //     data:
+  //     {
+  //       nama_penyewa:value.nama,
+  //       email: value.email,
+  //       kontak:no_hp,
+  //       kontak_wali: kontak_darurat,
+  //       alamat:alamat,
+  //       username:value.username,
+  //       password:value.password,
+  //     },
+  //   })
+  //   .then((response) => {
+  //     console.log(response.data);
+  //   })
+  //   .catch((error)=> {
+  //     // console.error('error', error);
+  //     console.log(error.response)
+  //     handleMessage("Gagal!");
+  //   });
+  //   persistLogin({ ...data }, message, status);
+  //   Alert.alert("Register", "Anda berhasil registrasi!", [
+  //     {
+  //       text:"OK",
+  //       onPress: () => {},
+  //     },
+  //   ]);
+  // };
   const handleRegister = (credentials, setSubmitting) => {
+    setSubmitting(true);
     handleMessage(null);
-    const url = 'http://6355-180-242-234-59.ngrok.io/api/register';
 
-    axios
-      .post(url, credentials)
-      .then((response) => {
-        const result = response.data;
-        const { message, status, data } = result;
+    axios({
+      url:'http://e565-180-242-214-45.ngrok.io/api/register',
+      method:"POST",
+      data:
+      {
+        nama:value.nama,
+        email: value.email,
+        no_hp:no_hp,
+        kontak_darurat: kontak_darurat,
+        alamat:alamat,
+        username:value.username,
+        password:value.password,
+        foto: 'tenants/no-pict.png'
+      },
+    })
+    .then((response) => {
+      const result = response.data;
+      const { status, success, message, data } = result;
+      console.log(result)
 
-        if (status == 'success') {
-          // navigation.navigate('register2');
-          persistLogin({ ...data }, message, status);
-          Alert.alert("Register", "Anda berhasil registrasi!", [
-            {
-              text:"OK",
-              onPress: () => {},
-            },
-          ]);
-          // persistLogin({...data}, message, status);
-        }
-        else {
-          handleMessage("Email telah terdaftar!");
-          setSubmitting(false);
-        }
-        setSubmitting(false);
-      })
+      if (status == 'success') {
+        // navigation.navigate('register2');
+        axios({
+          url:'https://sialbert.000webhostapp.com/teknisi/api/register/create',
+          method:"POST",
+          data:
+          {
+            id_penyewa:data.id,
+            nama_penyewa:value.nama,
+            email: value.email,
+            kontak:no_hp,
+            kontak_wali: kontak_darurat,
+            alamat:alamat,
+            username:value.username,
+            password:value.password,
+          },
+        })
+        .then((response) => {
+          // console.log(response.data);
+          const resultl = response.data;
+          const { st, er, mes, da } = resultl;
+          if (mes == 'Whoops! email yang Anda masukkan telah terdaftar') {
+            Alert.alert("Gagal", "Email yang Anda masukkan telah terdaftar.", [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("Register"),
+              },
+            ])
+            console.log('gagal1')
+            setSubmitting(false);
+          }
+          else if (mes == 'Whoops! kontak yang Anda masukkan telah terdaftar') {
+            Alert.alert("Gagal!", "Kontak yang Anda masukkan telah terdaftar.")
+            console.log('gagal2')
+            setSubmitting(false);
+          }
+          else if (mes != 'Whoops! kontak yang Anda masukkan telah terdaftar' && mes != 'Whoops! email yang Anda masukkan telah terdaftar') {
+            Alert.alert("Register", "Anda berhasil registrasi!", [
+              {
+                text:"OK",
+                onPress: () =>  {},
+              },
+            ])
+            console.log('gagal3')
+            persistLogin({...data}, message, status);
+          }
+        })
+        .catch((error)=> {
+          // console.error('error', error);
+          // console.log(error.response)
+          handleMessage("Gagal!");
+        });
+      }
+      setSubmitting(false);
+      // persistLogin({ ...data }, message, status);
+    })
 
-      .catch(function(error) {
-        setSubmitting(false);
-        handleMessage("Email atau password salah, silahkan coba kembali!");
-      });
-      // .catch((error)=> {
-      //   console.log(error.JSON());
-      //   setSubmitting(false);
-      //   handleMessage("An error occured. Check your internet and try again!");
-      // });
+    .catch(function(error) {
+      console.log(error.response)
+      setSubmitting(false);
+      handleMessage("Gagal!");
+    });
+    // .catch((error)=> {
+    //   console.log(error.JSON());
+    //   setSubmitting(false);
+    //   handleMessage("An error occured. Check your internet and try again!");
+    // });
     };
 
     const handleMessage = (message, type = 'failed') => {
@@ -159,10 +248,24 @@ export default function RegisterPage({ navigation, route }) {
                 //     navigation.navigate('Login');
                 //   }
                 // }}
-                validationSchema={regisValidationSchema}
-                initialValues={{  nama: value.nama, email: value.email, password: value.password, no_hp: '', kontak_darurat: '', alamat: ''}}
+                // validationSchema={regisValidationSchema}
+                initialValues={{  nama: value.nama, email: value.email, username: value.username, password: value.password, foto:'no-pict.png'}}
                 onSubmit={(values, {setSubmitting})  => {
-                  handleRegister(values, setSubmitting);
+                  if (no_hp == '') {
+                    handleMessage('Harap isi semua informasi pendaftaran akun!');
+                    setSubmitting(false);
+                  }
+                  if (kontak_darurat == '') {
+                    handleMessage('Harap isi semua informasi pendaftaran akun!');
+                    setSubmitting(false);
+                  }
+                  if (alamat == '') {
+                    handleMessage('Harap isi semua informasi pendaftaran akun!');
+                    setSubmitting(false);
+                  }
+                  else {
+                    handleRegister(values, setSubmitting);
+                  }
                 }}
               >
                 {({ handleChange, handleSubmit, touched, values, isSubmitting, errors }) => (
@@ -173,12 +276,12 @@ export default function RegisterPage({ navigation, route }) {
                         <TextInput
                           autoCapitalize="none"
                           autoCorrect={false}
-                          keyboardType='numeric'
+                          keyboardType={'number-pad'}
                           returnKeyType="next"
                           placeholder="No. Handphone"
                           style={styles.textInput}
-                          onChangeText={handleChange('no_hp')}
-                          value={values.no_hp}
+                          onChangeText={(no_hp) => setNoHp(no_hp)}
+                          value={no_hp}
                         />
                       </View>
                       {(errors.no_hp && touched.no_hp) &&
@@ -195,8 +298,8 @@ export default function RegisterPage({ navigation, route }) {
                           returnKeyType="next"
                           placeholder="Kontak Darurat"
                           style={styles.textInput}
-                          onChangeText={handleChange('kontak_darurat')}
-                          value={values.kontak_darurat}
+                          onChangeText={(kontak_darurat) => setKontakDarurat(kontak_darurat)}
+                          value={kontak_darurat}
                         />
                       </View>
                       {(errors.kontak_darurat && touched.kontak_darurat) &&
@@ -211,8 +314,8 @@ export default function RegisterPage({ navigation, route }) {
                           autoCorrect={false}
                           returnKeyType="done"
                           style={styles.textInput}
-                          onChangeText={handleChange('alamat')}
-                          value={values.alamat}
+                          onChangeText={(alamat) => setAlamat(alamat)}
+                          value={alamat}
                           placeholder="Alamat"
                         />
                       </View>
@@ -247,7 +350,7 @@ export default function RegisterPage({ navigation, route }) {
                       />
                     </View>
                     {/* <Text type ={messageType} style={styles.message}>{message}</Text> */}
-                    <Text type ={messageType} style={styles.message}>{message}</Text>
+                    {/* <Text type ={messageType} style={styles.message}>{message}</Text> */}
                     <View style={styles.regis}>
                       <Text style={styles.textButton}>Sudah Punya Akun?</Text>
                       <TouchableOpacity onPress={() => {
@@ -389,6 +492,7 @@ const styles = {
       color: 'red',
       alignItems: "center",
       marginHorizontal: 8,
+      marginBottom:8,
       justifyContent: "center",
     }
   };

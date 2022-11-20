@@ -22,9 +22,8 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
   const [message, setMessage] = useState();
   const {order_id} = route.params;
   const [messageType, setMessageType] = useState();
-  const { storedCredentials, setStoredCredentials } =
-    useContext(CredentialsContext);
-  const { nama, email, id } = storedCredentials;
+  const { storedCredentials, setStoredCredentials } = useContext(CredentialsContext);
+  const { nama, email, id, token } = storedCredentials;
   const ref = useRef();
   const [signature, setSign] = useState(null);
   const [visible, setVisible] = useState(false);
@@ -92,7 +91,7 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
 
   //Just and ordinary upload fetch function
   const uploadImageAsync = (uri) => {
-    let apiUrl = `http://6355-180-242-234-59.ngrok.io/api/orders/post/ttdPemohon/${order_id}`;
+    let apiUrl = `http://e565-180-242-214-45.ngrok.io/api/orders/post/ttdPemohon/${order_id}`;
 
     let formData = new FormData();
 
@@ -108,6 +107,7 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
       headers: {
         Accept: "application/json",
         "Content-Type": "multipart/form-data",
+        'Authorization': 'Bearer '+token,
       },
     };
 
@@ -133,7 +133,7 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
       .catch((error) => {
         console.log("error", error);
         setVisible(false);
-        setIsDisabled(false);f
+        setIsDisabled(false);
       });
   };
 
@@ -178,10 +178,15 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
             <Text style={{textAlign: 'center' }}>Step 3</Text>
         </View>
       </View>
-      <View style={{ height: "55%" }}>
+      <View style={{ height: "50%" }}>
         <PDFReader
           source={{
-            uri: `http://6355-180-242-234-59.ngrok.io/api/lihat-formulir-order/${order_id}`,
+            uri: `http://e565-180-242-214-45.ngrok.io/api/lihat-formulir-order/${order_id}`,
+            headers: {
+            //  'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer '+token,
+            }
           }}
         />
       </View>
@@ -196,7 +201,7 @@ export default function PdfFormulirOrder({ navigation, route, text, onOK }) {
           }}
         >
           <Text style={{ fontWeight: "bold", fontSize: 18 }}>
-            Tanda tangani Surat Permohonan!
+            Tanda tangani Permohonan!
           </Text>
           <View
             style={{

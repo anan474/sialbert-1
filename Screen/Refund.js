@@ -51,6 +51,7 @@ export default function MenuUtama({navigation}) {
   // const {nama, email} = route.params;
   const [data, setData] = useState([]);
   const [equipments, setEquipments] = useState([]);
+  const [alats, setAlats] = useState([]);
   const [page, setPage] = useState(1);
   const [text, setText] = useState('');
   const [cari, setCari] = useState([]);
@@ -66,7 +67,7 @@ export default function MenuUtama({navigation}) {
   const [noRek, setNoRek] = useState('');
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const {nama, email, id} = storedCredentials;
+  const {nama, email, id, token} = storedCredentials;
 
   // const [downloadProgress, setDownloadProgress] = useState(0);
   const [document, setDocument] = useState(null);
@@ -114,7 +115,14 @@ export default function MenuUtama({navigation}) {
   useEffect(async() => {
     let isMounted = true
     setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/riwayat-pembatalan/${id}`)
+    fetch(`http://e565-180-242-214-45.ngrok.io/api/riwayat-pembatalan/${id}`,
+    {
+      method: "GET",
+      headers: {
+        //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+      }})
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -125,19 +133,219 @@ export default function MenuUtama({navigation}) {
       .catch(error => { console.log; });
   }, [isFocused]);
 
-  useEffect(async() => {
-    let isMounted = true
-    setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/detail-orders')
-      .then((response) => response.json())
-      .then((hasil) => {
-        setEquipments(hasil);
-        setCari(hasil);
-        setIsLoading(false);
-      })
-      // .finally(() => setLoading(false));
-      .catch(error => { console.log; });
-  }, [isFocused]);
+  const handleAjukanRefund = (order_id) => {
+    handleMessage(null);
+    setVisible(true)
+    setIsDisabled(true);
+    if(selectedValue != 'Pilih' && nama_di_rekening != ''){
+      if(selectedValue != 'Bank Lainnya'){
+        axios({
+          url:`http://e565-180-242-214-45.ngrok.io/api/refunds/${order_id}`,
+          method:"POST",
+          headers: {
+            //  'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+token,
+          },
+          data:
+          {
+            order_id:order_id,
+            tenant_id: id,
+            metode_refund: selectedValue,
+            no_rekening: noRek,
+            nama_penerima: nama_di_rekening,
+            // detail_order_id: item?.[0].detail_order.id,
+            ket_verif_admin: 'belum',
+            ket_persetujuan_kepala_uptd: 'belum',
+            ket_persetujuan_kepala_dinas: 'belum',
+            refund_bendahara: 0,
+            bukti_refund:'',
+          },
+        })
+        .then((response) => {
+          const result = response.data;
+          const { pesan, success, status } = result;
+          console.log(response.data);
+          if(pesan == 'Pengajuan Refund Berhasil!'){
+            const alat=item.alat
+            console.log('tes', item)
+            // alat.map((item)=> {
+            //   axios({
+            //     url:`http://e565-180-242-214-45.ngrok.io/api/detail-refunds/${item?.[0].detail_order.id}`,
+            //     method:"POST",
+            //     headers: {
+            //       //  'Accept': 'application/json',
+            //         'Content-Type': 'application/json',
+            //         'Authorization': 'Bearer '+token,
+            //     },
+            //     data:
+            //     {
+            //       order_id:order_id,
+            //       detail_order_id: item?.[0].detail_order.id,
+            //     },
+            //   })
+            //   .then((response) => {
+            //     const result = response.data;
+            //     const { message, success, status } = result;
+            //     console.log(response.data);
+            //     setVisible(false)
+            //     setIsDisabled(false);
+            //     setModalVisible(!modalVisible)
+            //   })
+            //   .catch((error)=> {
+            //     // console.error('error', error);
+            //     console.log(error.response)
+            //     handleMessage("Gagal!");
+            //   });
+            // })
+            Alert.alert("Berhasil", "Pengajuan Refund Berhasil!", [
+              {
+                text:"OK",
+                onPress: () => navigation.navigate('Pembatalan'),
+              },
+            ]);
+          }
+          else if(pesan == 'Anda telah mengajukan pengembalian Dana!'){
+            Alert.alert("Tidak dapat mengajukan pengembalian dana!", "Anda telah mengajukan pengembalian dana untuk pesanan ini.");
+          }
+          setVisible(false)
+          setIsDisabled(false);
+          setModalVisible(!modalVisible)
+        })
+        .catch((error)=> {
+          // console.error('error', error);
+          console.log(error.response)
+          handleMessage("Gagal!");
+        });
+      } else {
+        axios({
+          url:`http://e565-180-242-214-45.ngrok.io/api/refunds/${order_id}`,
+          method:"POST",
+          headers: {
+            //  'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+token,
+          },
+          data:
+          {
+            order_id:order_id,
+            tenant_id: id,
+            metode_refund: lainnya,
+            no_rekening: noRek,
+            nama_penerima: nama_di_rekening,
+            // detail_order_id: item?.[0].detail_order.id,
+            ket_verif_admin: 'belum',
+            ket_persetujuan_kepala_uptd: 'belum',
+            ket_persetujuan_kepala_dinas: 'belum',
+            refund_bendahara: 0,
+            bukti_refund:'',
+          },
+        })
+        .then((response) => {
+          const result = response.data;
+          const { pesan, success, status } = result;
+          console.log(response.data);
+          const alat=item.alat
+          console.log(alat)
+          if(pesan == 'Pengajuan Refund Berhasil!'){
+            // alat.map((item)=> {
+            //   axios({
+            //     url:`http://e565-180-242-214-45.ngrok.io/api/detail-refunds/${item?.[0].detail_order.id}`,
+            //     method:"POST",
+            //     headers: {
+            //       //  'Accept': 'application/json',
+            //         'Content-Type': 'application/json',
+            //         'Authorization': 'Bearer '+token,
+            //     },
+            //     data:
+            //     {
+            //       order_id:order_id,
+            //       detail_order_id: item?.[0].detail_order.id,
+            //     },
+            //   })
+            //   .then((response) => {
+            //     const result = response.data;
+            //     const { message, success, status } = result;
+            //     console.log(response.data);
+            //     setVisible(false)
+            //     setIsDisabled(false);
+            //     setModalVisible(!modalVisible)
+            //   })
+            //   .catch((error)=> {
+            //     // console.error('error', error);
+            //     console.log(error.response)
+            //     handleMessage("Gagal!");
+            //   });
+            // })
+            Alert.alert("Berhasil", "Pengajuan Refund Berhasil!", [
+              {
+                text:"OK",
+                onPress: () => navigation.navigate('Pembatalan'),
+              },
+            ]);
+          }
+          else if(pesan == 'Anda telah mengajukan pengembalian Dana!'){
+            Alert.alert("Tidak dapat mengajukan pengembalian dana!", "Anda telah mengajukan pengembalian dana untuk pesanan ini.");
+          }
+          setVisible(false)
+          setIsDisabled(false);
+          setModalVisible(!modalVisible)
+        })
+        .catch((error)=> {
+          // console.error('error', error);
+          console.log(error.response)
+          handleMessage("Gagal!");
+        });
+      }
+    }else{
+      if(selectedValue == 'Pilih'){
+        Alert.alert('Harap isi metode pembayaran!')
+        setVisible(false)
+        setIsDisabled(false);
+      }
+      if(nama_di_rekening == ''){
+        Alert.alert('Harap isi nama di rekening!')
+        setVisible(false)
+        setIsDisabled(false);
+      }
+      if(noRek == ''){
+        Alert.alert('Harap isi nomor rekening!')
+        setVisible(false)
+        setIsDisabled(false);
+      }
+    }
+  };
+
+  const handleMessage = (message, type = 'failed') => {
+    setMessage(message);
+    setMessageType(type);
+  }
+
+  const letHide = () => {
+    if (visible === true) {
+      setVisible(false)
+    } else {
+      setVisible(true)
+    }
+  }
+
+  const doYourTask = () => {
+    setIsDisabled(true);
+  }
+
+  // useEffect(async() => {
+  //   let isMounted = true
+  //   setIsLoading(true);
+  //   fetch('http://e565-180-242-214-45.ngrok.io/api/detail-orders')
+  //     .then((response) => response.json())
+  //     .then((hasil) => {
+  //       setEquipments(hasil);
+  //       setCari(hasil);
+  //       setIsLoading(false);
+  //     })
+  //     // .finally(() => setLoading(false));
+  //     .catch(error => { console.log; });
+  // }, [isFocused]);
 
   const openSettingModal = (order_id) => {
     setOrderId(order_id);
@@ -145,208 +353,50 @@ export default function MenuUtama({navigation}) {
   }
 
   const listOrders = ({item}) => {
-    const alat = [...item.alat]
+    const alat = item.alat
     const inisialValue = 0
     var i;
     const total_hari = item.total_hari
     const total_jam = item.total_jam
-    const count = alat.length
-    const harga_perhari = alat?.[0]?.harga_sewa_perhari * total_hari
-    const harga_perjam = alat?.[0]?.harga_sewa_perjam * total_jam
+    const count = item.total_alat
     const sum = harga_perhari + harga_perjam
-    const nama = alat?.[0]?.nama
-    // const order_id = alat.order_id
-    const total_harga = alat.reduce((total,item)=>{
-      const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
-      const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
-      const total_biaya = harga_sewa_perhari+harga_sewa_perjam
-      return total + total_biaya;
+    const order_id = item.id
+    // const nama_alat=alat?.[0]?.[0].alat.nama_alat
+    // console.log('alat',alat?.[0].alat?.[0].nama_alat)
+    const nama_alat=alat?.[0]?.[0].alat.nama_alat
+    const harga_perhari = alat?.[0]?.[0].alat.harga_sewa_perhari * total_hari
+    const harga_perjam = alat?.[0]?.[0].alat.harga_sewa_perjam * total_jam
+    // const harga_perjam = alat?.[0]?.[0]?.alat?.[0].harga_sewa_perjam * total_jam
+    const eq=alat
+    console.log('eq', eq)
+    const total_harga_perhari = alat.reduce((total,item)=>{
+      const harga_sewa_perhari = total_hari * item?.[0].alat.harga_sewa_perhari
+      return total + harga_sewa_perhari;
     },0)
-    // const sum = total.reduce(
-    //   (tot, jumlah) => tot +jumlah,
-    //   inisialValue
-    // )
+    const total_harga_perjam = alat.reduce((total,item)=>{
+      const harga_sewa_perjam = total_jam * item?.[0].alat.harga_sewa_perjam
+      return total + harga_sewa_perjam;
+    },0)
+    const id_alat=alat?.[0]?.equipment_id
+    // console.log(id_alat)
+    // useEffect(() => {
+    //   let isMounted = true
+    //   setIsLoading(true);
+    //   fetch('https://sialbert.000webhostapp.com/teknisi/equipments/show/' +id_alat)
+    //     .then((response) => response.json())
+    //     .then((hasil) => {
+    //       setData(hasil);
+    //       setIsLoading(false);
+    //     })
+    //     // .finally(() => setLoading(false));
+    //     .catch(error => { console.log; });
+    // }, [isFocused]);
     var idLocale=require('moment/locale/id');
     Moment.locale('id');
-    var dt = item.updated_at
+    var dt = item.created_at
     var id_order =item.id
     var nama_instansi =item.nama_instansi
 
-    const handleAjukanRefund = (order_id) => {
-      handleMessage(null);
-      setVisible(true)
-      setIsDisabled(true);
-      if(selectedValue != 'Pilih' && nama_di_rekening != ''){
-        if(selectedValue != 'Bank Lainnya'){
-          axios({
-            url:`http://6355-180-242-234-59.ngrok.io/api/refunds/${order_id}`,
-            method:"POST",
-            data:
-            {
-              order_id:order_id,
-              tenant_id: id,
-              metode_refund: selectedValue,
-              no_rekening: noRek,
-              nama_penerima: nama_di_rekening,
-              detail_order_id: item.id,
-              ket_verif_admin: 'belum',
-              ket_persetujuan_kepala_uptd: 'belum',
-              ket_persetujuan_kepala_dinas: 'belum',
-              refund_bendahara: 0,
-              bukti_refund:'',
-            },
-          })
-          .then((response) => {
-            const result = response.data;
-            const { pesan, success, status } = result;
-            console.log(response.data);
-            if(pesan == 'Pengajuan Refund Berhasil!'){
-              alat.map((item)=> {
-                axios({
-                  url:`http://6355-180-242-234-59.ngrok.io/api/detail-refunds/${item.id}`,
-                  method:"POST",
-                  data:
-                  {
-                    order_id:order_id,
-                    detail_order_id: item.id,
-                  },
-                })
-                .then((response) => {
-                  const result = response.data;
-                  const { message, success, status } = result;
-                  console.log(response.data);
-                  setVisible(false)
-                  setIsDisabled(false);
-                  setModalVisible(!modalVisible)
-                })
-                .catch((error)=> {
-                  // console.error('error', error);
-                  console.log(error.response)
-                  handleMessage("Gagal!");
-                });
-              })
-              Alert.alert("Berhasil", "Pengajuan Refund Berhasil!", [
-                {
-                  text:"OK",
-                  onPress: () => navigation.navigate('Pembatalan'),
-                },
-              ]);
-            }
-            else if(pesan == 'Anda telah mengajukan pengembalian Dana!'){
-              Alert.alert("Tidak dapat mengajukan pengembalian dana!", "Anda telah mengajukan pengembalian dana untuk pesanan ini.");
-            }
-            setVisible(false)
-            setIsDisabled(false);
-            setModalVisible(!modalVisible)
-          })
-          .catch((error)=> {
-            // console.error('error', error);
-            console.log(error.response)
-            handleMessage("Gagal!");
-          });
-        } else {
-          axios({
-            url:`http://6355-180-242-234-59.ngrok.io/api/refunds/${order_id}`,
-            method:"POST",
-            data:
-            {
-              order_id:order_id,
-              tenant_id: id,
-              metode_refund: lainnya,
-              no_rekening: noRek,
-              nama_penerima: nama_di_rekening,
-              detail_order_id: item.id,
-              ket_verif_admin: 'belum',
-              ket_persetujuan_kepala_uptd: 'belum',
-              ket_persetujuan_kepala_dinas: 'belum',
-              refund_bendahara: 0,
-              bukti_refund:'',
-            },
-          })
-          .then((response) => {
-            const result = response.data;
-            const { pesan, success, status } = result;
-            console.log(response.data);
-            if(pesan == 'Pengajuan Refund Berhasil!'){
-              alat.map((item)=> {
-                axios({
-                  url:`http://6355-180-242-234-59.ngrok.io/api/detail-refunds/${item.id}`,
-                  method:"POST",
-                  data:
-                  {
-                    order_id:order_id,
-                    detail_order_id: item.id,
-                  },
-                })
-                .then((response) => {
-                  const result = response.data;
-                  const { message, success, status } = result;
-                  console.log(response.data);
-                  setVisible(false)
-                  setIsDisabled(false);
-                  setModalVisible(!modalVisible)
-                })
-                .catch((error)=> {
-                  // console.error('error', error);
-                  console.log(error.response)
-                  handleMessage("Gagal!");
-                });
-              })
-              Alert.alert("Berhasil", "Pengajuan Refund Berhasil!", [
-                {
-                  text:"OK",
-                  onPress: () => navigation.navigate('Pembatalan'),
-                },
-              ]);
-            }
-            else if(pesan == 'Anda telah mengajukan pengembalian Dana!'){
-              Alert.alert("Tidak dapat mengajukan pengembalian dana!", "Anda telah mengajukan pengembalian dana untuk pesanan ini.");
-            }
-            setVisible(false)
-            setIsDisabled(false);
-            setModalVisible(!modalVisible)
-          })
-          .catch((error)=> {
-            // console.error('error', error);
-            console.log(error.response)
-            handleMessage("Gagal!");
-          });
-        }
-      }else{
-        if(selectedValue == 'Pilih'){
-          Alert.alert('Harap isi metode pembayaran!')
-          setVisible(false)
-          setIsDisabled(false);
-        }
-        if(nama_di_rekening == ''){
-          Alert.alert('Harap isi nama di rekening!')
-          setVisible(false)
-          setIsDisabled(false);
-        }
-        if(noRek == ''){
-          Alert.alert('Harap isi nomor rekening!')
-          setVisible(false)
-          setIsDisabled(false);
-        }
-      }
-    };
-
-    const handleMessage = (message, type = 'failed') => {
-      setMessage(message);
-      setMessageType(type);
-    }
-
-    const letHide = () => {
-      if (visible === true) {
-        setVisible(false)
-      } else {
-        setVisible(true)
-      }
-    }
-
-    const doYourTask = () => {
-      setIsDisabled(true);
-    }
 
     return (
       <>
@@ -357,196 +407,401 @@ export default function MenuUtama({navigation}) {
             <View style={{ flexDirection:'row', textAlign:'center', textAlignVertical: 'center'}}>
               <View style={{ flexDirection:'row', margin:16, textAlign:'center', textAlignVertical: 'center',justifyContent: 'center' }}>
                 {/* <Image source={{uri: item.foto}} style={styles.myequipmentImage} /> */}
-                <Card style={styles.card}>
-                  {(() => {
-                    const order_id = item.id
-                    console.log(order_id)
-                    return (
-                      <View>
-                        <View style={{ margin:16, flexDirection:'row', justifyContent: "space-between"}}>
-                          <View style={{ flexDirection: 'row' }}>
-                            <Image source={Rent} style={{ width:24, height:24, marginRight:8 }} />
-                            <Text style={{ fontWeight:'bold'}}>{Moment(dt).format('DD MMMM YYYY')}</Text>
+                {item.status_bayar == 'telah_dibayar' ?
+                  <Card style={styles.card}>
+                    {(() => {
+                      const order_id = item.id
+                      console.log('order_id', order_id)
+                      return (
+                        <View>
+                          <View style={{ margin:16, flexDirection:'row', justifyContent: "space-between"}}>
+                            <View style={{ flexDirection: 'row' }}>
+                              <Image source={Rent} style={{ width:24, height:24, marginRight:8 }} />
+                              <Text style={{ fontWeight:'bold'}}>{Moment(dt).format('DD MMMM YYYY')}</Text>
+                            </View>
+                            {/* {(() => {
+                            if(item.ket_persetujuan_kepala_dinas === 'setuju'){
+                              return(
+                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#11CF00', alignItems:'center', padding:2}}>
+                                  <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan telah disetujui</Text>
+                                </View>
+                              )
+                            }
+                            if(item.ket_persetujuan_kepala_uptd !== 'tolak' && item.ket_verif_admin !== 'tolak'){
+                              if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'verif'){
+                                return(
+                                  <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
+                                    <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu persetujuan</Text>
+                                  </View>
+                                )
+                              }
+                              else if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'belum'){
+                                return(
+                                  <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
+                                    <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu verifikasi</Text>
+                                  </View>
+                                )
+                              }
+                            }
+                            if(item.ket_verif_admin === 'tolak' || item.ket_persetujuan_kepala_uptd === 'tolak' || item.ket_persetujuan_kepala_dinas === 'tolak'){
+                              return(
+                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FB1313', alignItems:'center', padding:2}}>
+                                  <Text style={{ textAlign:'right', color:'#FB1313', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan Ditolak</Text>
+                                </View>
+                              )
+                            }
+                            return null;
+                            })()} */}
                           </View>
-                          {(() => {
-                          if(item.ket_persetujuan_kepala_dinas === 'setuju'){
-                            return(
-                              <View style={{ borderWidth:2, borderRadius:8, borderColor: '#11CF00', alignItems:'center', padding:2}}>
-                                <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan telah disetujui</Text>
+                          <View style={styles.border2}/>
+                          <View style={{ margin:16 }}>
+                            <Text>{item.nama_kegiatan}</Text>
+                            {/* <Text>nama alat{alat?.[0]?.[0].alat.nama_alat}</Text> */}
+                            <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
+                              <Image source={{ uri:'https://sialbert.000webhostapp.com/'+alat?.[0]?.[0].alat.foto + '/' +alat?.[0]?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                              <View>
+                                <Text>{item.alat?.[0]?.[0].alat.nama_alat}</Text>
+                                {item.total_hari > 0 ?
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
+                                {item.total_hari > 0 ?
+                                  <Text>x{item.total_hari} hari</Text>:
+                                  <Text>x{item.total_hari} jam</Text>
+                                }
+                                {item.total_hari > 0 ?
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perhari *item.total_hari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perjam *item.total_jam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
                               </View>
-                            )
-                          }
-                          if(item.ket_persetujuan_kepala_uptd !== 'tolak' && item.ket_verif_admin !== 'tolak'){
-                            if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'verif'){
-                              return(
-                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
-                                  <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu persetujuan</Text>
-                                </View>
-                              )
-                            }
-                            else if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'belum'){
-                              return(
-                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
-                                  <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu verifikasi</Text>
-                                </View>
-                              )
-                            }
-                          }
-                          if(item.ket_verif_admin === 'tolak' || item.ket_persetujuan_kepala_uptd === 'tolak' || item.ket_persetujuan_kepala_dinas === 'tolak'){
-                            return(
-                              <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FB1313', alignItems:'center', padding:2}}>
-                                <Text style={{ textAlign:'right', color:'#FB1313', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan Ditolak</Text>
+                            </View>
+                            <View style={styles.border2}/>
+                            <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
+                              <Text>{count} Alat</Text>
+                              <View style={{ flexDirection: 'row', marginTop:4 }}>
+                                <Text>Total Pesanan:</Text>
+                                {item.total_hari > 0 ?
+                                  <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
                               </View>
-                            )
-                          }
-                          return null;
-                          })()}
-                        </View>
-                        <View style={styles.border2}/>
-                        <View style={{ margin:16 }}>
-                          <Text>{item.nama_kegiatan}</Text>
-                          <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
-                            <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+alat?.[0]?.foto }} style={{ width:58, height:58, marginRight:8 }} />
-                            <View>
-                              <Text>{nama}</Text>
-                              <Text>x1</Text>
-                              <Text style={{ fontWeight:'bold' }}>Rp.{sum.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                              {/* {alat &&
+                                alat.map((item, idx) => {
+                                  const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
+                                  const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
+                                  const total = harga_sewa_perjam + harga_sewa_perhari
+                                  return(
+                                    <View key={idx}>
+                                      <Text>{total}</Text>
+                                    </View>
+                                  )
+                                })
+                              } */}
                             </View>
                           </View>
                           <View style={styles.border2}/>
-                          <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
-                            <Text>{count} Alat</Text>
-                            <View style={{ flexDirection: 'row', marginTop:4 }}>
-                              <Text>Total Pesanan:</Text>
-                              <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
-                            </View>
-                            {/* {alat &&
-                              alat.map((item, idx) => {
-                                const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
-                                const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
-                                const total = harga_sewa_perjam + harga_sewa_perhari
-                                return(
-                                  <View key={idx}>
-                                    <Text>{total}</Text>
-                                  </View>
-                                )
-                              })
-                            } */}
+                          <Text style={{ textAlign:'center', margin: 4, color: "#C4C4C4"}}>Lihat Detail</Text>
+                          <View style={styles.border2}/>
+                          <View style={{ flexDirection:'row', margin:4 }}>
+                            <TouchableOpacity
+                              // onPress={(e) =>
+                              //   {
+                              //     onPress={() => openSettingModal(detail_order_id)}
+                              //     handleAjukanRefund(e, order_id)
+                              //   }
+                              // }
+                              onPress={() => openSettingModal(order_id)}>
+                              <View style={styles.button}>
+                                <Text style={styles.buttonTitle}>Ajukan Pengembalian Dana</Text>
+                              </View>
+                            </TouchableOpacity>
                           </View>
-                        </View>
-                        <View style={styles.border2}/>
-                        <Text style={{ textAlign:'center', margin: 4, color: "#C4C4C4"}}>Lihat Detail</Text>
-                        <View style={styles.border2}/>
-                        <View style={{ flexDirection:'row', margin:4 }}>
-                          <TouchableOpacity
-                            // onPress={(e) =>
-                            //   {
-                            //     onPress={() => openSettingModal(detail_order_id)}
-                            //     handleAjukanRefund(e, order_id)
-                            //   }
-                            // }
-                            onPress={() => openSettingModal(order_id)}>
-                            <View style={styles.button}>
-                              <Text style={styles.buttonTitle}>Ajukan Pengembalian Dana</Text>
-                            </View>
-                          </TouchableOpacity>
-                        </View>
-                    </View>
-                    )
-                  })()}
-                  <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisible}
-                    onRequestClose={() => {
-                      // Alert.alert("Modal has been closed.");
-                      setModalVisible(!modalVisible);
-                    }}
-                  >
-                    <View style={styles.centeredView}>
-                      <View style={styles.modalView}>
-                      <View style={{ width: '100%' }}>
-                        <View style={{ margin: 8, backgroundColor: '#ffcd04', borderRadius: 20, borderColor: '#ffcd04', borderWidth:2 }}>
-                          <Picker
-                            style={styles.pickerCustomeStyle}
-                            mode='dropdown'
-                            style={{ color: 'white'}}
-                            // value={rekening}
-                            selectedValue={selectedValue}
-                            onValueChange={(itemValue, itemIndex) =>
-                              setFieldValue(itemValue)
-                            }
-                            >
-                            <Picker.Item label="--Pilih Bank--" value="Pilih" key={1}/>
-                            <Picker.Item label="Bank Kalbar" value="Bank Kalbar" key={2}/>
-                            <Picker.Item label="Bank BCA" value="Bank BCA" key={3}/>
-                            <Picker.Item label="Bank Mandiri" value="Bank Mandiri" key={4}/>
-                            <Picker.Item label="Bank BNI" value="Bank BNI" key={5}/>
-                            <Picker.Item label="Bank BRI" value="Bank BRI" key={6}/>
-                            <Picker.Item label="Bank Syariah Indonesia (BSI)" value="Bank Syariah Indonesia (BSI)" key={7}/>
-                            <Picker.Item label="Bank Permata" value="Bank Permata" key={8}/>
-                            <Picker.Item label="Bank lainnya" value="Bank Lainnya" key={9}/>
-                          </Picker>
-                        </View>
-                        {selectedValue == 'Bank Lainnya' &&
+                      </View>
+                      )
+                    })()}
+                    <Modal
+                      animationType="slide"
+                      transparent={true}
+                      visible={modalVisible}
+                      onRequestClose={() => {
+                        // Alert.alert("Modal has been closed.");
+                        setModalVisible(!modalVisible);
+                      }}
+                    >
+                      <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                        <View style={{ width: '100%' }}>
+                          <View style={{ margin: 8, backgroundColor: '#ffcd04', borderRadius: 20, borderColor: '#ffcd04', borderWidth:2 }}>
+                            <Picker
+                              style={styles.pickerCustomeStyle}
+                              mode='dropdown'
+                              style={{ color: 'white'}}
+                              // value={rekening}
+                              selectedValue={selectedValue}
+                              onValueChange={(itemValue, itemIndex) =>
+                                setFieldValue(itemValue)
+                              }
+                              >
+                              <Picker.Item label="--Pilih Bank--" value="Pilih" key={1}/>
+                              <Picker.Item label="Bank Kalbar" value="Bank Kalbar" key={2}/>
+                              <Picker.Item label="Bank BCA" value="Bank BCA" key={3}/>
+                              <Picker.Item label="Bank Mandiri" value="Bank Mandiri" key={4}/>
+                              <Picker.Item label="Bank BNI" value="Bank BNI" key={5}/>
+                              <Picker.Item label="Bank BRI" value="Bank BRI" key={6}/>
+                              <Picker.Item label="Bank Syariah Indonesia (BSI)" value="Bank Syariah Indonesia (BSI)" key={7}/>
+                              <Picker.Item label="Bank Permata" value="Bank Permata" key={8}/>
+                              <Picker.Item label="Bank lainnya" value="Bank Lainnya" key={9}/>
+                            </Picker>
+                          </View>
+                          {selectedValue == 'Bank Lainnya' &&
+                            <TextInput
+                              autoCapitalize="none"
+                              autoCorrect={false}
+                              returnKeyType="next"
+                              placeholder="Isi nama Bank"
+                              style={styles.textInput}
+                              onChangeText={setLainnya}
+                              value={lainnya}
+                              editable={true}
+                            />
+                          }
                           <TextInput
                             autoCapitalize="none"
                             autoCorrect={false}
                             returnKeyType="next"
-                            placeholder="Isi nama Bank"
+                            keyboardType='number-pad'
+                            placeholder="Nomor Rekening"
                             style={styles.textInput}
-                            onChangeText={setLainnya}
-                            value={lainnya}
+                            onChangeText={setNoRek}
+                            value={noRek}
                             editable={true}
                           />
-                        }
-                        <TextInput
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          returnKeyType="next"
-                          keyboardType='number-pad'
-                          placeholder="Nomor Rekening"
-                          style={styles.textInput}
-                          onChangeText={setNoRek}
-                          value={noRek}
-                          editable={true}
-                        />
-                        <TextInput
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          returnKeyType="next"
-                          placeholder="Nama di rekening"
-                          style={styles.textInput}
-                          onChangeText={setNamaDiRekening}
-                          value={nama_di_rekening}
-                          editable={true}
-                        />
-                        <TouchableOpacity onPress={() => handleAjukanRefund(order_id)}
-                        disabled={isDisabled}>
-                          <View style={styles.btn}>
-                            {visible == true &&
-                              <ActivityIndicator
-                                size="large"
-                                color="#00B8D4"
-                                animating={visible}
-                              />
+                          <TextInput
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="next"
+                            placeholder="Nama di rekening"
+                            style={styles.textInput}
+                            onChangeText={setNamaDiRekening}
+                            value={nama_di_rekening}
+                            editable={true}
+                          />
+                          <TouchableOpacity onPress={() => handleAjukanRefund(order_id)}
+                          disabled={isDisabled}>
+                            <View style={styles.btn}>
+                              {visible == true &&
+                                <ActivityIndicator
+                                  size="large"
+                                  color="#00B8D4"
+                                  animating={visible}
+                                />
+                              }
+                              {visible == false &&
+                                <Text style={styles.textStyle}>KIRIM</Text>
+                              }
+                            </View>
+                          </TouchableOpacity>
+                          <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}
+                          >
+                            <Text style={styles.textStyle}>BATALKAN</Text>
+                          </Pressable>
+                        </View>
+                        </View>
+                      </View>
+                    </Modal>
+                  </Card>:
+                  <Card style={styles.card2}>
+                    {(() => {
+                      const order_id = item.id
+                      console.log(order_id)
+                      return (
+                        <View>
+                          <View style={{ margin:16, flexDirection:'row', justifyContent: "space-between"}}>
+                            <View style={{ flexDirection: 'row' }}>
+                              <Image source={Rent} style={{ width:24, height:24, marginRight:8 }} />
+                              <Text style={{ fontWeight:'bold'}}>{Moment(dt).format('DD MMMM YYYY')}</Text>
+                            </View>
+                            {/* {(() => {
+                            if(item.ket_persetujuan_kepala_dinas === 'setuju'){
+                              return(
+                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#11CF00', alignItems:'center', padding:2}}>
+                                  <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan telah disetujui</Text>
+                                </View>
+                              )
                             }
-                            {visible == false &&
-                              <Text style={styles.textStyle}>KIRIM</Text>
+                            if(item.ket_persetujuan_kepala_uptd !== 'tolak' && item.ket_verif_admin !== 'tolak'){
+                              if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'verif'){
+                                return(
+                                  <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
+                                    <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu persetujuan</Text>
+                                  </View>
+                                )
+                              }
+                              else if((item.ket_persetujuan_kepala_dinas === 'belum' || item.ket_persetujuan_kepala_uptd === 'belum') && item.ket_verif_admin === 'belum'){
+                                return(
+                                  <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
+                                    <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu verifikasi</Text>
+                                  </View>
+                                )
+                              }
                             }
+                            if(item.ket_verif_admin === 'tolak' || item.ket_persetujuan_kepala_uptd === 'tolak' || item.ket_persetujuan_kepala_dinas === 'tolak'){
+                              return(
+                                <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FB1313', alignItems:'center', padding:2}}>
+                                  <Text style={{ textAlign:'right', color:'#FB1313', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan Ditolak</Text>
+                                </View>
+                              )
+                            }
+                            return null;
+                            })()} */}
                           </View>
-                        </TouchableOpacity>
-                        <Pressable
-                          style={[styles.button, styles.buttonClose]}
-                          onPress={() => setModalVisible(!modalVisible)}
-                        >
-                          <Text style={styles.textStyle}>BATALKAN</Text>
-                        </Pressable>
+                          <View style={styles.border2}/>
+                          <View style={{ margin:16 }}>
+                            <Text>{item.nama_kegiatan}</Text>
+                            <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
+                              <Image source={{ uri:'https://sialbert.000webhostapp.com/'+alat?.[0]?.[0].alat.foto + '/' +alat?.[0]?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                              <View>
+                                <Text>{alat?.[0]?.[0].alat.nama_alat}</Text>
+                                {item.total_hari > 0 ?
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
+                                {item.total_hari > 0 ?
+                                  <Text>x{item.total_hari} hari</Text>:
+                                  <Text>x{item.total_hari} jam</Text>
+                                }
+                                {item.total_hari > 0 ?
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perhari *item.total_hari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ fontWeight:'bold' }}>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perjam *item.total_jam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
+                              </View>
+                            </View>
+                            <View style={styles.border2}/>
+                            <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
+                              <Text>{count} Alat</Text>
+                              <View style={{ flexDirection: 'row', marginTop:4 }}>
+                                <Text>Total Pesanan:</Text>
+                                {item.total_hari > 0 ?
+                                  <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                                  <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
+                              </View>
+                              {/* {alat &&
+                                alat.map((item, idx) => {
+                                  const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
+                                  const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
+                                  const total = harga_sewa_perjam + harga_sewa_perhari
+                                  return(
+                                    <View key={idx}>
+                                      <Text>{total}</Text>
+                                    </View>
+                                  )
+                                })
+                              } */}
+                            </View>
+                          </View>
+                          <View style={styles.border2}/>
+                          <Text style={{ textAlign:'center', margin: 4, color: "#C4C4C4"}}>Lihat Detail</Text>
+                          <View style={styles.border2}/>
                       </View>
+                      )
+                    })()}
+                    <Modal
+                      animationType="slide"
+                      transparent={true}
+                      visible={modalVisible}
+                      onRequestClose={() => {
+                        // Alert.alert("Modal has been closed.");
+                        setModalVisible(!modalVisible);
+                      }}
+                    >
+                      <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                        <View style={{ width: '100%' }}>
+                          <View style={{ margin: 8, backgroundColor: '#ffcd04', borderRadius: 20, borderColor: '#ffcd04', borderWidth:2 }}>
+                            <Picker
+                              style={styles.pickerCustomeStyle}
+                              mode='dropdown'
+                              style={{ color: 'white'}}
+                              // value={rekening}
+                              selectedValue={selectedValue}
+                              onValueChange={(itemValue, itemIndex) =>
+                                setFieldValue(itemValue)
+                              }
+                              >
+                              <Picker.Item label="--Pilih Bank--" value="Pilih" key={1}/>
+                              <Picker.Item label="Bank Kalbar" value="Bank Kalbar" key={2}/>
+                              <Picker.Item label="Bank BCA" value="Bank BCA" key={3}/>
+                              <Picker.Item label="Bank Mandiri" value="Bank Mandiri" key={4}/>
+                              <Picker.Item label="Bank BNI" value="Bank BNI" key={5}/>
+                              <Picker.Item label="Bank BRI" value="Bank BRI" key={6}/>
+                              <Picker.Item label="Bank Syariah Indonesia (BSI)" value="Bank Syariah Indonesia (BSI)" key={7}/>
+                              <Picker.Item label="Bank Permata" value="Bank Permata" key={8}/>
+                              <Picker.Item label="Bank lainnya" value="Bank Lainnya" key={9}/>
+                            </Picker>
+                          </View>
+                          {selectedValue == 'Bank Lainnya' &&
+                            <TextInput
+                              autoCapitalize="none"
+                              autoCorrect={false}
+                              returnKeyType="next"
+                              placeholder="Isi nama Bank"
+                              style={styles.textInput}
+                              onChangeText={setLainnya}
+                              value={lainnya}
+                              editable={true}
+                            />
+                          }
+                          <TextInput
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="next"
+                            keyboardType='number-pad'
+                            placeholder="Nomor Rekening"
+                            style={styles.textInput}
+                            onChangeText={setNoRek}
+                            value={noRek}
+                            editable={true}
+                          />
+                          <TextInput
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="next"
+                            placeholder="Nama di rekening"
+                            style={styles.textInput}
+                            onChangeText={setNamaDiRekening}
+                            value={nama_di_rekening}
+                            editable={true}
+                          />
+                          <TouchableOpacity onPress={() => handleAjukanRefund(order_id)}
+                          disabled={isDisabled}>
+                            <View style={styles.btn}>
+                              {visible == true &&
+                                <ActivityIndicator
+                                  size="large"
+                                  color="#00B8D4"
+                                  animating={visible}
+                                />
+                              }
+                              {visible == false &&
+                                <Text style={styles.textStyle}>KIRIM</Text>
+                              }
+                            </View>
+                          </TouchableOpacity>
+                          <Pressable
+                            style={[styles.button, styles.buttonClose]}
+                            onPress={() => setModalVisible(!modalVisible)}
+                          >
+                            <Text style={styles.textStyle}>BATALKAN</Text>
+                          </Pressable>
+                        </View>
+                        </View>
                       </View>
-                    </View>
-                  </Modal>
-                </Card>
+                    </Modal>
+                  </Card>
+                }
               </View>
             </View>
           </TouchableOpacity>
@@ -554,7 +809,6 @@ export default function MenuUtama({navigation}) {
       </>
     );
   }
-
   return (
     <>
       <View style={{ backgroundColor: '#fff' }}>
@@ -788,7 +1042,16 @@ const styles = StyleSheet.create({
     shadowOffset: {width:0, height:2},
     shadowOpacity: 1,
     width: '100%',
-    height: 300,
+    height: 320,
+    borderColor:'#2196F3',
+    borderWidth:2,
+    marginVertical: 8
+  },
+  card2: {
+    shadowOffset: {width:0, height:2},
+    shadowOpacity: 1,
+    width: '100%',
+    height: 260,
     borderColor:'#2196F3',
     borderWidth:2,
     marginVertical: 8

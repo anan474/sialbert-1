@@ -29,7 +29,7 @@ export default function MenuUtama({navigation}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const {nama, email, id} = storedCredentials;
+  const {nama, email, id, token} = storedCredentials;
   const [refreshing, setRefreshing] = useState(true);
   const isFocused = useIsFocused();
 
@@ -37,7 +37,14 @@ export default function MenuUtama({navigation}) {
   useEffect(async() => {
     let isMounted = true
     setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/reschedules/${id}`)
+    fetch(`http://e565-180-242-214-45.ngrok.io/api/reschedules/${id}`,
+    {
+      method: "GET",
+      headers: {
+        //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+      }})
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -57,6 +64,7 @@ export default function MenuUtama({navigation}) {
     var idLocale=require('moment/locale/id');
     Moment.locale('id');
     var dt = item.created_at
+    console.log('nama alat', alat?.[0]?.[0].alat.nama_alat)
     return (
       <>
         <ScrollView>
@@ -64,70 +72,41 @@ export default function MenuUtama({navigation}) {
             onPress={() => navigation.navigate('Detail Reschedule', {reschedule: item})}
           >
             <View style={{ flexDirection:'row', textAlign:'center', textAlignVertical: 'center'}}>
-              <View style={{ flexDirection:'row', margin:16, textAlign:'center', textAlignVertical: 'center',justifyContent: 'center' }}>
+              <View style={{ flexDirection:'row', margin:8, textAlign:'center', textAlignVertical: 'center',justifyContent: 'center' }}>
                 {/* <Image source={{uri: item.foto}} style={styles.myequipmentImage} /> */}
                 <Card style={styles.card}>
                   <View style={{ margin:16, flexDirection:'row', justifyContent: "space-between"}}>
                     <View style={{ flexDirection: 'row' }}>
                       <Image source={Rent} style={{ width:24, height:24, marginRight:8 }} />
-                      <Text style={{ fontWeight:'bold'}}>{Moment(dt).format('DD MMMM YYYY')}</Text>
+                      <Text style={{ fontWeight:'bold'}}>Nama Kegiatan: {item.nama_kegiatan}</Text>
+                      {/* <Text style={{ fontWeight:'bold'}}>Nama Kegiatan: {item.nama_kegiatan}</Text> */}
                     </View>
-                    {(() => {
-                    if(item.ket_persetujuan_kepala_uptd === 'setuju'){
-                      return(
-                        <View style={{ borderWidth:2, borderRadius:8, borderColor: '#11CF00', alignItems:'center', padding:2}}>
-                          <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan telah disetujui</Text>
-                        </View>
-                      )
-                    }
-                    if(item.ket_persetujuan_kepala_uptd !== 'tolak' && item.ket_verif_admin !== 'tolak'){
-                      if(item.ket_persetujuan_kepala_uptd === 'belum' && item.ket_verif_admin === 'verif'){
-                        return(
-                          <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
-                            <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu persetujuan</Text>
-                          </View>
-                        )
-                      }
-                      else if(item.ket_persetujuan_kepala_uptd === 'belum' && item.ket_verif_admin === 'belum'){
-                        return(
-                          <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FAD603', alignItems:'center', padding:2}}>
-                            <Text style={{ textAlign:'right', color:'#FAD603', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Menunggu verifikasi</Text>
-                          </View>
-                        )
-                      }
-                    }
-                    if(item.ket_verif_admin === 'tolak' || item.ket_persetujuan_kepala_uptd === 'tolak'){
-                      return(
-                        <View style={{ borderWidth:2, borderRadius:8, borderColor: '#FB1313', alignItems:'center', padding:2}}>
-                          <Text style={{ textAlign:'right', color:'#FB1313', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan Ditolak</Text>
-                        </View>
-                      )
-                    }
-                    return null;
-                    })()}
                   </View>
                   <View style={styles.border2}/>
                   <View style={{ margin:16 }}>
-                    <Text>{item.nama_kegiatan}</Text>
                     <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
                       <View>
-                        <Image source={{ uri:'http://34e7-2001-448a-6060-f025-b1a0-596-c980-beb4.ngrok.io/storage/'+alat?.[0]?.foto }} style={{ width:58, height:58, marginRight:8 }} />
-                        <Text style={{ fontWeight:'100', marginBottom:4, fontSize:12 }}>{alat?.[0]?.nama}</Text>
-                      </View>
-                      <View>
-                        <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Mulai</Text>
-                        <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(alat?.[0]?.waktu_mulai).format('dddd, DD MMMM YYYY')}</Text>
-                        <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Selesai</Text>
-                        <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(alat?.[0]?.waktu_selesai).format('dddd, DD MMMM YYYY')}</Text>
-                      </View>
-                      <View>
-                        <Text style={{ opacity: 0.4, fontSize:12 }}>Jam Mulai</Text>
-                        <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(alat?.[0]?.waktu_mulai).format('H:mm')}</Text>
-                        <Text style={{ opacity: 0.4, fontSize:12 }}>Jam Selesai</Text>
-                        <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(alat?.[0]?.waktu_selesai).format('H:mm')}</Text>
+                        <Image source={{ uri:'https://sialbert.000webhostapp.com/'+alat?.[0]?.[0].alat.foto +'/' +alat?.[0]?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                        <Text style={{ fontWeight:'bold', marginBottom:4 }}>{alat?.[0]?.[0].alat.nama_alat}</Text>
                       </View>
                     </View>
-                  </View>
+                      <View>
+                        <View>
+                          <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:16, marginTop:16 }}>Waktu Awal:</Text>
+                          <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Mulai</Text>
+                          <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(item.tanggal_mulai).format('dddd, DD MMMM YYYY')} {Moment(item.tanggal_mulai).format('H:mm')}</Text>
+                          <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Selesai</Text>
+                          <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(item.tanggal_selesai).format('dddd, DD MMMM YYYY')} {Moment(item.tanggal_selesai).format('H:mm')}</Text>
+                        </View>
+                        <View>
+                          <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:16, marginTop:16 }}>Waktu Reschedule:</Text>
+                          <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Mulai</Text>
+                          <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(alat?.[0]?.[0].detail_order.waktu_mulai).format('dddd, DD MMMM YYYY')} {Moment(alat?.[0]?.[0].detail_order.waktu_mulai).format('H:mm')}</Text>
+                          <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Selesai</Text>
+                          <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(alat?.[0]?.[0].detail_order.waktu_selesai).format('dddd, DD MMMM YYYY')} {Moment(alat?.[0]?.[0].detail_order.waktu_selesai).format('H:mm')}</Text>
+                        </View>
+                      </View>
+                    </View>
                   <View style={styles.border2}/>
                   <Text style={{ textAlign:'center', margin: 4, color: "#C4C4C4"}}>Lihat Detail</Text>
                   <View style={styles.border2}/>
@@ -411,7 +390,7 @@ const styles = StyleSheet.create({
     shadowOffset: {width:0, height:2},
     shadowOpacity: 0.5,
     width: '100%',
-    height: 220,
+    height: 430,
     borderColor:'#2196F3',
     borderWidth:2
   }

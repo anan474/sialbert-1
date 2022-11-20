@@ -53,6 +53,9 @@ export default function RegisterPage({ navigation }) {
       .string()
       .email("Harap masukkan email yang valid!")
       .required('Alamat email wajib diisi!'),
+    username: yup
+      .string()
+      .required('Username wajib diisi!'),
     password: yup
       .string()
       .min(8, ({ min }) => `Password minimal ${min} karakter`)
@@ -64,7 +67,7 @@ export default function RegisterPage({ navigation }) {
 
   const handleRegister = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = 'http://6355-180-242-234-59.ngrok.io/api/register';
+    const url = 'http://e565-180-242-214-45.ngrok.io/api/register';
 
     axios
       .post(url, credentials)
@@ -163,14 +166,14 @@ export default function RegisterPage({ navigation }) {
                 //   }
                 // }}
                 validationSchema={regisValidationSchema}
-                initialValues={{  nama: '', email: '', password: '', repassword: '', foto: 'tenant/no-pict.png'  }}
-                onSubmit={(values, {setSubmitting})  => {
-                  handleRegister(values, setSubmitting);
-                }}
+                initialValues={{  nama: '', email: '', username: '', password: '', repassword: '', foto: 'tenant/no-pict.png'  }}
                 // onSubmit={(values, {setSubmitting})  => {
-                //   navigation.navigate('Register2', {value: values})
-                //   setSubmitting(false);
+                //   handleRegister(values, setSubmitting);
                 // }}
+                onSubmit={(values, {setSubmitting})  => {
+                  navigation.navigate('Register2', {value: values})
+                  setSubmitting(false);
+                }}
               >
                 {({ handleChange, handleSubmit, touched, values, isSubmitting, errors }) => (
                   <View>
@@ -208,6 +211,23 @@ export default function RegisterPage({ navigation }) {
                       </View>
                       {(errors.email && touched.email) &&
                         <Text style={{ fontSize: 10, color: 'red' }}>{errors.email}</Text>
+                      }
+                    </View>
+                    <View>
+                      <View style={styles.form}>
+                        <Image style={styles.icon} source={Username} />
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          returnKeyType="next"
+                          placeholder="Username"
+                          style={styles.textInput}
+                          onChangeText={handleChange('username')}
+                          value={values.username}
+                        />
+                      </View>
+                      {(errors.username && touched.username) &&
+                        <Text style={{ fontSize: 10, color: 'red' }}>{errors.username}</Text>
                       }
                     </View>
                     <View>

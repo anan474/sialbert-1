@@ -47,7 +47,7 @@ export default function LoginPage({ navigation, item }) {
   const loginValidationSchema = yup.object().shape({
     email: yup
       .string()
-      .email("Harap masukkan email yang valid!")
+      // .email("Harap masukkan email yang valid!")
       .required('Alamat email wajib diisi!'),
     password: yup
       .string()
@@ -56,7 +56,7 @@ export default function LoginPage({ navigation, item }) {
 
   const handleLogin = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = 'http://6355-180-242-234-59.ngrok.io/api/login';
+    const url = 'http://e565-180-242-214-45.ngrok.io/api/login';
 
     axios
       .post(url, credentials)
@@ -67,6 +67,7 @@ export default function LoginPage({ navigation, item }) {
         if (status == 'success') {
           // navigation.navigate('MenuUtama', {...data[0]});
           persistLogin({ ...data[0] }, message, status);
+          console.log(...data[0])
           Alert.alert("Login", "Anda berhasil login!", [
             {
               text:"OK",
@@ -152,7 +153,7 @@ export default function LoginPage({ navigation, item }) {
                           autoCorrect={false}
                           keyboardType="email-address"
                           returnKeyType="next"
-                          placeholder="Email"
+                          placeholder="Username atau Email"
                           style={styles.textInput}
                           textContentType="username"
                           onChangeText={handleChange('email')}

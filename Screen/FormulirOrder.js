@@ -40,7 +40,7 @@ export default function FormulirOrder({navigation, route}) {
   const [messageType, setMessageType] = useState();
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const {nama, email, no_hp, foto, kontak_darurat, alamat, id} = storedCredentials;
+  const {nama, email, no_hp, foto, kontak_darurat, alamat, id, token} = storedCredentials;
   const isFocused = useIsFocused();
 
   const formOrderValidationSchema = yup.object().shape({
@@ -56,6 +56,9 @@ export default function FormulirOrder({navigation, route}) {
     nama_kegiatan: yup
       .string()
       .required('Nama Kegiatan wajib diisi!'),
+    alamat_kegiatan: yup
+      .string()
+      .required('Alamat Kegiatan wajib diisi!'),
     category_order_id: yup
       .string()
       .required('Status Kegiatan wajib diisi!'),
@@ -63,7 +66,7 @@ export default function FormulirOrder({navigation, route}) {
 
   const handleRegister = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = 'http://6355-180-242-234-59.ngrok.io/api/register';
+    const url = 'http://e565-180-242-214-45.ngrok.io/api/register';
 
     axios
       .post(url, credentials)
@@ -105,20 +108,6 @@ export default function FormulirOrder({navigation, route}) {
 
   console.log(selectedValue)
 
-  useEffect(async() => {
-    setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/cekUser/${id}`)
-      .then((response) => response.json())
-      .then((hasil) => {
-        setAvatar(hasil);
-        setIsLoading(false);
-      })
-      // .finally(() => setLoading(false));
-      .catch(error => { console.log; });
-
-  }, [isFocused]);
-
-
   return (
     <SafeAreaView style={{ justifyContent: 'center', flexDirection: "row", flex:1}}>
       {isLoading &&
@@ -142,7 +131,7 @@ export default function FormulirOrder({navigation, route}) {
             validationSchema={formOrderValidationSchema}
             // enableReinitialize={true}
             // initialValues={{ category_order_id:selectedValue, nama_kegiatan: '', tenant_id:id, nama_penyewa: nama, email: email, no_hp: no_hp, kontak_darurat: kontak_darurat, alamat: alamat, nama_instansi: '', jabatan:'', alamat_instansi:''}}
-            initialValues={{ category_order_id:selectedValue, nama_kegiatan: '', tenant_id:id, nama_instansi: '', jabatan:'', alamat_instansi:''}}
+            initialValues={{ category_order_id:selectedValue, nama_kegiatan: '', alamat_kegiatan:'', tenant_id:id, nama_instansi: '', jabatan:'', alamat_instansi:''}}
             onSubmit={(values, {setSubmitting})  => {
               navigation.navigate('Formulir Order Step 2', {value: values})
             }}
@@ -208,6 +197,22 @@ export default function FormulirOrder({navigation, route}) {
                       <Text style={{ fontSize: 10, color: 'red', marginLeft:16 }}>{errors.nama_kegiatan}</Text>
                     }
                   </View>
+                  <View>
+                    <View style={styles.form}>
+                      <Text style={{ marginLeft:16, marginTop:4 }}>Lokasi Kegiatan :</Text>
+                      <TextInput
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        returnKeyType="next"
+                        placeholder="Alamat Kegiatan"
+                        style={styles.textInputAlamat}
+                        onChangeText={handleChange('alamat_kegiatan')}
+                      />
+                    </View>
+                    {(errors.alamat_kegiatan && touched.alamat_kegiatan) &&
+                      <Text style={{ fontSize: 10, color: 'red', marginLeft:16 }}>{errors.alamat_kegiatan}</Text>
+                    }
+                  </View>
                   <View style={styles.border}></View>
                   <View style={{ flexDirection:'row' }}>
                     <View style={{ width: '50%' }}>
@@ -227,20 +232,20 @@ export default function FormulirOrder({navigation, route}) {
                     <View style={{ width:'50%' }}>
                       <View style={styles.form}>
                         <Text style={{ marginLeft:16, marginTop:4 }}>No. Handphone:</Text>
-                        <Text style={styles.textInput}>{avatar.no_hp}</Text>
+                        <Text style={styles.textInput}>{no_hp}</Text>
                       </View>
                     </View>
                     <View style={{ width:'50%' }}>
                       <View style={styles.form}>
                         <Text style={{ marginLeft:16, marginTop:4 }}>Kontak Darurat:</Text>
-                        <Text style={styles.textInput}>{avatar.kontak_darurat}</Text>
+                        <Text style={styles.textInput}>{kontak_darurat}</Text>
                       </View>
                     </View>
                   </View>
                   <View>
                     <View style={styles.form}>
                       <Text style={{ marginLeft:16, marginTop:4 }}>Alamat :</Text>
-                      <Text style={styles.textInputAlamat}>{avatar.alamat}</Text>
+                      <Text style={styles.textInputAlamat}>{alamat}</Text>
                     </View>
                   </View>
                   <View style={styles.border3}/>

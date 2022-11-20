@@ -16,6 +16,7 @@ import Alat from "./Screen/Alat";
 import Penyewaan from "./Screen/Penyewaan";
 import PdfFormulirOrder from "./Screen/PdfFormulirOrder";
 import FormPembayaran from "./Screen/FormPembayaran";
+import skr from "./Screen/skr";
 import FormulirOrder from "./Screen/FormulirOrder";
 import FormSecondStep from "./Screen/forms/FormSecondStep";
 import DetailOrder from "./Screen/DetailOrder";
@@ -27,6 +28,7 @@ import DetailReschedule from "./Screen/DetailReschedule";
 import Pembatalan from "./Screen/Refund";
 import Reschedule from "./Screen/Reschedule";
 import Cart from "./Screen/Cart";
+import sk from "./Screen/sk";
 import { CartIcon } from './components/CartIcon.js';
 
 import AppLoading from 'expo-app-loading';
@@ -287,6 +289,11 @@ export default function App({navigation}) {
                   options={{ headerShown: false }}
                   />
                   <Stack.Screen
+                  name="Persyaratan dan Prosedur Sewa"
+                  component={sk}
+                  options={{ headerShown: true }}
+                  />
+                  <Stack.Screen
                   name="Detail Order"
                   component={DetailOrder}
                   options={{ headerShown: true }}
@@ -299,6 +306,11 @@ export default function App({navigation}) {
                   <Stack.Screen
                   name="Pembayaran"
                   component={FormPembayaran}
+                  options={{ headerShown: true }}
+                  />
+                  <Stack.Screen
+                  name="SKR"
+                  component={skr}
                   options={{ headerShown: true }}
                   />
                   <Stack.Screen

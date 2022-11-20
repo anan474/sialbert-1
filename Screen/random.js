@@ -54,7 +54,7 @@ export default function EditProfil({route, navigation, props}) {
 
   const handleEditProfil = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = `http://6355-180-242-234-59.ngrok.io/api/editProfil/1`;
+    const url = `http://59bd-2001-448a-6060-321d-5cc4-b2c9-58f9-b880.ngrok.io/api/editProfil/1`;
 
     axios
       .put(url, credentials)

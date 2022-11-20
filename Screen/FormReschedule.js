@@ -23,6 +23,7 @@ export default function DetaiReschedule({ navigation, route }) {
   const {dtMulai} = route.params
   const {dtSelesai} = route.params
   const {order_id} = route.params
+  const {kode_pesanan} = route.params
   const [data, setData] = useState([]);
   const [equipments, setEquipments] = useState([]);
   const [page, setPage] = useState(1);
@@ -40,8 +41,9 @@ export default function DetaiReschedule({ navigation, route }) {
   const [messageType, setMessageType] = useState();
   const [visible, setVisible] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
-
+  
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
+  const {nama, email, id, token} = storedCredentials;
   // const total_harga = alat.reduce((total,item)=>{
   //   const harga_sewa_perhari = item.jumlah_hari_refund * item.harga_sewa_perhari
   //   const harga_sewa_perjam = item.jumlah_jam_refund * item.harga_sewa_perjam
@@ -63,7 +65,7 @@ export default function DetaiReschedule({ navigation, route }) {
 
   const handleReschedule = (credentials, isSubmitting, alasan_refund) => {
     handleMessage(null);
-    const url = `http://6355-180-242-234-59.ngrok.io/api/reschedules/post`;
+    const url = `http://e565-180-242-214-45.ngrok.io/api/reschedules/post`;
 
     if(dayDiffAwal != dayDiff || hoursDiffAwal != hoursDiff)
     {
@@ -78,17 +80,22 @@ export default function DetaiReschedule({ navigation, route }) {
     }
     else{
       axios({
-        url:`http://6355-180-242-234-59.ngrok.io/api/reschedules/post`,
+        url:`http://e565-180-242-214-45.ngrok.io/api/reschedules/post`,
         method:"POST",
+        headers: {
+          //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+        },
         data:
         {
           waktu_mulai: tanggalMulai,
-            waktu_selesai: tanggalSelesai,
-            // alasan_refund: alasan_refund,
-            detail_order_id: detail_reschedule,
-            order_id: order_id,
-            ket_verif_admin:'belum',
-            ket_persetujuan_kepala_uptd:'belum'
+          waktu_selesai: tanggalSelesai,
+          // alasan_refund: alasan_refund,
+          detail_order_id: detail_reschedule,
+          order_id: order_id,
+          ket_verif_admin:'belum',
+          ket_persetujuan_kepala_uptd:'belum'
         },
       })
 
@@ -96,6 +103,29 @@ export default function DetaiReschedule({ navigation, route }) {
         const result = response.data;
         const { message, success, status, data } = result;
         console.log(response.data);
+        axios({
+          url:`https://sialbert.000webhostapp.com/teknisi/equipments/reschedule`,
+          method:"POST",
+          data:
+          {
+            waktu_mulai: tanggalMulai,
+            waktu_selesai: tanggalSelesai,
+            // alasan_refund: alasan_refund,
+            detail_order_id: detail_reschedule,
+            order_id: kode_pesanan,
+            id_alat: id_alat,
+          },
+        })
+        .then((response) => {
+          const result = response.data;
+          const { message, error, status } = result;
+          console.log(response.data)
+        })
+        .catch((error)=> {
+          // console.error('error', error);
+          console.log(error.response)
+          handleMessage("Tidak ada koneksi internet!");
+        });
 
         if (success == true) {
           // navigation.navigate('MenuUtama');
@@ -182,7 +212,8 @@ export default function DetaiReschedule({ navigation, route }) {
   const dayDiff = tSelesai.diff(tMulai, 'days');
   const hoursDiff = tSelesai.diff(tMulai, 'hours');
 
-  const detail_reschedule = reschedule.id
+  const detail_reschedule = reschedule?.[0].detail_order.id
+  const id_alat = reschedule?.[0].detail_order.id_alat
   const tanggalMulai = Moment(date1).format('YYYY-MM-DD HH:mm:ss')
   const tanggalSelesai = Moment(date2).format('YYYY-MM-DD HH:mm:ss')
 
@@ -197,18 +228,16 @@ export default function DetaiReschedule({ navigation, route }) {
             <View style={{ margin:16 }}>
               <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
                 <View>
-                  <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+reschedule.foto }} style={{ width:58, height:58, marginRight:8 }} />
-                  <Text style={{ fontWeight:'100', marginBottom:4, fontSize:11 }}>{reschedule.nama}</Text>
+                <Image source={{ uri:'https://sialbert.000webhostapp.com/'+reschedule?.[0].alat.foto +'/' +reschedule?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8, marginTop: 8 }} />
+                  <Text style={{ fontWeight:'100', marginBottom:4, fontSize:11 }}>{reschedule?.[0].alat.nama_alat}</Text>
                 </View>
                 <View>
                   <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Mulai</Text>
                   <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(dtMulai).format('dddd, DD MMMM YYYY')}</Text>
-                  <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Selesai</Text>
-                  <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(dtSelesai).format('dddd, DD MMMM YYYY')}</Text>
-                </View>
-                <View>
                   <Text style={{ opacity: 0.4, fontSize:12 }}>Jam Mulai</Text>
                   <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{Moment(dtMulai).format('HH:mm')}</Text>
+                  <Text style={{ opacity: 0.4, fontSize:12 }}>Tanggal Selesai</Text>
+                  <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(dtSelesai).format('dddd, DD MMMM YYYY')}</Text>
                   <Text style={{ opacity: 0.4, fontSize:12 }}>Jam Selesai</Text>
                   <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{Moment(dtSelesai).format('HH:mm')}</Text>
                 </View>
@@ -231,8 +260,7 @@ export default function DetaiReschedule({ navigation, route }) {
             waktu_mulai: tanggalMulai,
             waktu_selesai: tanggalSelesai,
             // alasan_refund: '',
-            detail_order_id:
-            detail_reschedule,
+            detail_order_id: detail_reschedule,
             order_id: order_id,
             ket_verif_admin:'belum',
             ket_persetujuan_kepala_uptd:'belum'
@@ -247,7 +275,7 @@ export default function DetaiReschedule({ navigation, route }) {
               <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:15, borderTopRightRadius:15}}>
                 <Text style={{ marginLeft:16, marginTop:14, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Detail Pengajuan Perubahan Jadwal</Text>
               </View>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 16 }}>
+              <View style={{ paddingHorizontal: 8, paddingVertical: 16 }}>
                 <View>
                     <Text style={{ fontWeight:"bold", textAlign:"center", marginBottom:4 }}>Tanggal Mulai</Text>
                     <View style={styles.pickedDateContainer}>
@@ -265,7 +293,7 @@ export default function DetaiReschedule({ navigation, route }) {
                     </TouchableOpacity>
                 </View>
                 <View>
-                    <Text style={{ fontWeight:"bold", alignItems:'center', textAlign:"center", marginBottom:4 }}>Tanggal Selesai</Text>
+                    <Text style={{ fontWeight:"bold", alignItems:'center', marginTop:16, textAlign:"center", marginBottom:4 }}>Tanggal Selesai</Text>
                     <View style={styles.pickedDateContainer}>
                         <Text style={styles.pickedDate}>{Moment(date2).format('DD MMMM YYYY HH:mm')}</Text>
                     </View>
@@ -374,6 +402,14 @@ export default function DetaiReschedule({ navigation, route }) {
                   autoCorrect={false}
                   returnKeyType="next"
                   onChangeText={handleChange('ket_persetujuan_kepala_uptd')}
+                  editable={false}
+                  type="hidden"
+                />
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  onChangeText={handleChange('id_alat')}
                   editable={false}
                   type="hidden"
                 />

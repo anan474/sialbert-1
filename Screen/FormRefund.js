@@ -49,7 +49,7 @@ export default function FormRefund({ navigation, route }) {
 
   const handleReschedule = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = `http://6355-180-242-234-59.ngrok.io/api/reschedules/post`;
+    const url = `http://131c-2001-448a-6060-4db8-b599-af20-2fcc-3149.ngrok.io/api/reschedules/post`;
 
     axios
       .post(url, credentials)
@@ -165,7 +165,7 @@ export default function FormRefund({ navigation, route }) {
             <View style={{ margin:16 }}>
               <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
                 <View>
-                  <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+reschedule.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                  <Image source={{ uri:'http://131c-2001-448a-6060-4db8-b599-af20-2fcc-3149.ngrok.io/storage/'+reschedule.foto }} style={{ width:58, height:58, marginRight:8 }} />
                   <Text style={{ fontWeight:'100', marginBottom:4, fontSize:11 }}>{reschedule.nama}</Text>
                 </View>
                 <View>

@@ -26,7 +26,7 @@ export default function DetaiRefund({ navigation, route }) {
   const isFocused = useIsFocused();
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const alat = [...refund.alat]
+  const alat = order.alat
   console.log(alat)
   const total_harga = alat.reduce((total,item)=>{
     const harga_sewa_perhari = item.jumlah_hari_refund * item.harga_sewa_perhari
@@ -35,9 +35,20 @@ export default function DetaiRefund({ navigation, route }) {
     return total + total_biaya;
   },0)
 
+  const eq=refund.alat
+  // const order_id = alat.order_id
+  const total_harga_perhari = eq.reduce((total,item)=>{
+    const harga_sewa_perhari = total_hari * item?.[0]?.harga_sewa_perhari
+    return total + harga_sewa_perhari;
+  },0)
+  const total_harga_perjam = eq.reduce((total,item)=>{
+    const harga_sewa_perjam = total_jam * item?.[0]?.harga_sewa_perjam
+    return total + harga_sewa_perjam;
+  },0)
+
   useEffect(async() => {
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/refunds')
+    fetch('http://e565-180-242-214-45.ngrok.io/api/refunds')
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -51,7 +62,7 @@ export default function DetaiRefund({ navigation, route }) {
 
   useEffect(async() => {
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/detail-refunds')
+    fetch('http://e565-180-242-214-45.ngrok.io/api/detail-refunds')
       .then((response) => response.json())
       .then((hasil) => {
         setEquipments(hasil);
@@ -98,20 +109,20 @@ export default function DetaiRefund({ navigation, route }) {
                   <Text>{item.metode_refund}</Text>
                   <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
                     <View>
-                      <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+item.foto }} style={{ width:58, height:58, marginRight:8 }} />
-                      <Text style={{ fontWeight:'100', marginBottom:4, fontSize:11 }}>{item.nama}</Text>
+                      <Image source={{ uri:'http://e565-180-242-214-45.ngrok.io/storage/'+item?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                      <Text style={{ fontWeight:'100', marginBottom:4, fontSize:11 }}>{iitem?.[0].alat.nama_alat}</Text>
                     </View>
                     <View>
                       <Text style={{ opacity: 0.4, fontSize:12 }}>Jumlah hari refund</Text>
-                      <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{item.jumlah_hari_refund} X Rp.{(item.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                      <Text style={{ fontWeight:'bold', marginBottom:8, fontSize:12 }}>{item.jumlah_hari_refund} X Rp.{Number(item.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
                       <Text style={{ opacity: 0.4, fontSize:12 }}>Jumlah jam refund</Text>
-                      <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{item.jumlah_jam_refund} X Rp.{(item.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                      <Text style={{ fontWeight:'bold', marginBottom:4, fontSize:12 }}>{item.jumlah_jam_refund} X Rp.{Number(item.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
                     </View>
                     <View>
                       <Text>x1</Text>
-                      <Text style={{ marginBottom:8, fontWeight:'bold', fontSize:12 }}>Rp.{(item.jumlah_hari_refund * item.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                      <Text style={{ marginBottom:8, fontWeight:'bold', fontSize:12 }}>Rp.{Number(item.jumlah_hari_refund * item.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
                       <Text>x1</Text>
-                      <Text style={{ fontWeight:'bold', fontSize:12 }}>Rp.{(item.jumlah_jam_refund * item.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                      <Text style={{ fontWeight:'bold', fontSize:12 }}>Rp.{(item.jumlah_jam_refund) * Number(item.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
                     </View>
                   </View>
                   <View style={styles.border2}/>
@@ -139,7 +150,7 @@ export default function DetaiRefund({ navigation, route }) {
             )}
             <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
               <Text style={{ fontWeight:'bold', fontSize:16, fontWeight:'bold', margin:16 }}> Total :</Text>
-              <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+              <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{Number(total_harga_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
             </View>
           </Card>
         </View>

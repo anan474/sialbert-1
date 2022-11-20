@@ -1,16 +1,25 @@
 import React, {createContext, useState} from 'react';
 import { useIsFocused } from '@react-navigation/native';
 // import { getProduct } from './services/ProductsService.js';
+
 export const CartContext = createContext();
 export function CartProvider(props) {
     const [items, setItems] = useState([]);
     const [data, setData] = useState([]);
     const isFocused = useIsFocused();
-    
+    const {nama, email, no_hp, foto, kontak_darurat, alamat, id,token} = storedCredentials;
     useEffect(async() => {
         let isMounted = true
         setIsLoading(true);
-        fetch('http://6355-180-242-234-59.ngrok.io/api/equipments')
+        fetch(`http://e565-180-242-214-45.ngrok.io/api/equipments`,
+        {
+        method: "GET",
+        headers: {
+            //  'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer '+token,
+        }})
+        // fetch('http://e565-180-242-214-45.ngrok.io/api/equipments')
         .then((response) => response.json())
         .then((hasil) => {
             setData(hasil);
@@ -20,17 +29,17 @@ export function CartProvider(props) {
         // .finally(() => setLoading(false));
         .catch(error => { console.log; });
 
-    const id= data.id
+    const id_alat= data.id_alat
     const harga=data.harga_sewa_perhari
-    const nama_alat=data.nama
+    const nama_alat=data.nama_alat
     }, [isFocused]);
-    function addItemToCart(id) {
-        const product = id;
+    function addItemToCart(id_alat) {
+        const product = id_alat;
         setItems((prevItems) => {
-        const item = prevItems.find((item) => (item.id == id));
+        const item = prevItems.find((item) => (item.id_alat == id_alat));
         if(!item) {
             return [...prevItems, {
-                id,
+                id_alat,
                 qty: 1,
                 product,
                 totalPrice: product.harga
@@ -38,7 +47,7 @@ export function CartProvider(props) {
         }
         else {
             return prevItems.map((item) => {
-                if(item.id == id) {
+                if(item.id_alat == id_alat) {
                 item.qty++;
                 item.totalPrice += product.harga;
                 }

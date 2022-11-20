@@ -47,7 +47,7 @@ export default function Detail({ navigation, route }) {
     const isFocused = useIsFocused();
     // const {nama} = storedCart;
 
-    const id= alat.id
+    const id_alat= alat.id_alat
     const harga=alat.harga_sewa_perhari
     const nama_alat=alat.nama
 
@@ -63,10 +63,10 @@ export default function Detail({ navigation, route }) {
             // setStoredCart(alat);
             const product = alat;
             setItems((prevItems) => {
-                const alat = prevItems.find((alat) => (alat.id == id));
+                const alat = prevItems.find((alat) => (alat.id_alat == id_alat));
                 if(!alat) {
                     return [...prevItems, {
-                        id,
+                        id_alat,
                         qty: 1,
                         product,
                         totalPrice: product.harga_sewa_perjam,
@@ -87,7 +87,7 @@ export default function Detail({ navigation, route }) {
     useEffect(async() => {
         let isMounted = true
         setIsLoading(true);
-        fetch('http://6355-180-242-234-59.ngrok.io/api/schedule/' + alat.id)
+        fetch('https://sialbert.000webhostapp.com/teknisi/schedule/show/' + alat.id_alat)
           .then((response) => response.json())
           .then((hasil) => {
             setData(hasil);
@@ -100,6 +100,8 @@ export default function Detail({ navigation, route }) {
     const listOrders = ({item}) => {
         const tanggal = [...item.tanggal_mulai]
     }
+    // console.log(data)
+    // console.log('https://sialbert.000webhostapp.com/teknisi/schedule/show/' + alat.id_alat)
 
     const onChange = (event, selectedDate) => {
         const currentDate = selectedDate || date1;
@@ -138,7 +140,7 @@ export default function Detail({ navigation, route }) {
         showMode2('time');
     };
 
-    console.log(items, product)
+    // console.log(items, product)
 
     const cekCart = () => {
         Alert.alert("Cart", "Alat sudah ada di keranjang!", [
@@ -148,6 +150,8 @@ export default function Detail({ navigation, route }) {
             },
         ]);
     }
+    const harga_sewa_perhari = alat.harga_sewa_perhari
+    const harga_sewa_perjam = alat.harga_sewa_perjam
     // console.log(date1)
     // console.log(date2)
     // const data2= data.map((item, idx) => {
@@ -186,6 +190,7 @@ export default function Detail({ navigation, route }) {
     //     };
     // }, {});
 
+    console.log(data)
     const objectList = [...data]
     let calenderItems = objectList.reduce((acc, leave) => {
         let { tanggal_mulai, tanggal_selesai } = leave;
@@ -201,7 +206,7 @@ export default function Detail({ navigation, route }) {
         }
         return {...acc, ...dateRange};
     }, {});
-    // console.log(calenderItems)
+    console.log(calenderItems)
     // calenderItems = Object.keys(calenderItems)
     // .sort()
     // .reduce((obj, key) => {
@@ -210,26 +215,26 @@ export default function Detail({ navigation, route }) {
     // }, {});
 
 
-    let a = objectList.map((item, idx)=>{
-        const month = item.month
-        const range = [...month]
-        let anyString = 'tes'
-        const b = range.map((item, idx)=>{
-            const rentang = item.substring(0,10)
-            return rentang;
-            // const deliveryDates = [
-            //     {date:rentang, deliveryStatus:false, endingDay:false, startingDay:true},
-            // ];
+    // let a = objectList.map((item, idx)=>{
+    //     const month = item.month
+    //     const range = [...month]
+    //     let anyString = 'tes'
+    //     const b = range.map((item, idx)=>{
+    //         const rentang = item.substring(0,10)
+    //         return rentang;
+    //         // const deliveryDates = [
+    //         //     {date:rentang, deliveryStatus:false, endingDay:false, startingDay:true},
+    //         // ];
 
-            // const markedDates = deliveryDates.reduce((acc, {date,endingDay,startingDay}) => {
-            //     acc[date] = {disabled: true, color: 'green', startingDay, endingDay};
-            //     return acc;
-            // },{});
-            // return markedDates;
-            // console.log(markedDates)
-        })
-        return b;
-    })
+    //         // const markedDates = deliveryDates.reduce((acc, {date,endingDay,startingDay}) => {
+    //         //     acc[date] = {disabled: true, color: 'green', startingDay, endingDay};
+    //         //     return acc;
+    //         // },{});
+    //         // return markedDates;
+    //         // console.log(markedDates)
+    //     })
+    //     return b;
+    // })
     // const k = a.map((item, idx)=>{
     //     const deliveryDates = [
     //         {date:a, deliveryStatus:false, endingDay:false, startingDay:true},
@@ -242,29 +247,40 @@ export default function Detail({ navigation, route }) {
     // })
 
     let newDaysObject = {};
-    const i =a.forEach((day) => {
-        newDaysObject[day] = {
-            selected: true,
-            marked: true
-        }
-        return newDaysObject[day]
-    });
+    // const i =a.forEach((day) => {
+    //     newDaysObject[day] = {
+    //         selected: true,
+    //         marked: true
+    //     }
+    //     return newDaysObject[day]
+    // });
 
-
+    const photo ='https://sialbert.000webhostapp.com/' +alat.foto + '/' +alat.foto
     return (
         <ScrollView style={{ backgroundColor:'#fff' }}>
             <View style={{ backgroundColor:'#fff' }}>
                 <View style={{ height:250, width: '100%' }}>
-                    <Image source={{uri: alat.foto}} style={styles.equipmentImage}/>
+                    <Image source={{uri: photo}} style={styles.equipmentImage}/>
                 </View>
                 <View style= {{ flexDirection:'row', justifyContent: 'space-between' }}>
                     <View style={{ padding:16 }}>
-                        <Text style={styles.textHeader}>{alat.nama}</Text>
-                        <Text>{alat.keterangan}</Text>
-                    </View>
-                    <View style={{ padding:16}}>
-                        <Text>Rp.{alat.harga_sewa_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
-                        <Text style={{ marginTop:4 }}>Rp.{alat.harga_sewa_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                        <Text style={styles.textHeader}>{alat.nama_alat}</Text>
+                        <Text style={{ marginTop:4 }}>{alat.model}</Text>
+                        <Text style={{ marginTop:4 }}>{alat.jenis}</Text>
+                        <Text style={{ marginTop:8 }}>{alat.kegunaan}</Text>
+                        <Text style={{ marginTop:8 }}>{alat.spesifikasi}</Text>
+                        <View style={{ flexDirection:'row', justifyContent:'space-between', marginTop:8 }}>
+                            <Text>Kondisi:</Text>
+                            <Text>{alat.kondisi}</Text>
+                        </View>
+                        <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
+                            <Text>Harga Sewa Perjam:</Text>
+                            <Text>Rp.{Number(harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                        </View>
+                        <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
+                            <Text>Harga Sewa Perhari:</Text>
+                            <Text style={{ marginTop:4 }}>Rp.{Number(harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                        </View>
                     </View>
                 </View>
                 <View style={{ borderBotomColor:'yellow', borderBottomWidth: 2 }} opacity={0.5}/>

@@ -18,6 +18,7 @@ import AnimatedMultistep from "react-native-animated-multistep";
 import ScrollViewIndicator from 'react-native-scroll-indicator';
 import {Picker} from '@react-native-picker/picker';
 import { CartContext } from '../../components/CartContext';
+import uuid from 'react-native-uuid';
 
 import Add from "../../assets/image/plus.png";
 
@@ -98,7 +99,7 @@ export default function FormulirOrder({navigation, route}) {
 
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const {nama, email, id} = storedCredentials;
+  const {nama, email, id, token} = storedCredentials;
 
   const letHide = () => {
     if (visible === true) {
@@ -152,15 +153,25 @@ export default function FormulirOrder({navigation, route}) {
     showMode2('time');
   };
 
+  const category_order_id =value.category_order_id
   const tMulai = Moment(date1)
   const tSelesai = Moment(date2)
   const dayDiff = tSelesai.diff(tMulai, 'days');
   const hoursDiff = tSelesai.diff(tMulai, 'hours');
+  const minuteDiff = tSelesai.diff(tMulai, 'minutes');
   // console.log(tMulai)
   // console.log(dayDiff)
 
   const tanggalMulai = Moment(date1).format('YYYY-MM-DD HH:mm:ss')
   const tanggalSelesai = Moment(date2).format('YYYY-MM-DD HH:mm:ss')
+  const tgl_mulai= Moment(date1).format('YYYY-MM-DD')
+  const tgl_selesai= Moment(date2).format('YYYY-MM-DD')
+
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
 
   const pickKtp = async () => {
     // No permissions request is necessary for launching the image library
@@ -220,118 +231,193 @@ export default function FormulirOrder({navigation, route}) {
   const handleAjukanSewa = (credentials, isSubmitting) => {
     handleMessage(null);
 
-    if(hoursDiff > 0){
-      if (ktp != null) {
+    // if(hoursDiff > 0){
+    if (ktp != null) {
+      axios({
+        url:`http://e565-180-242-214-45.ngrok.io/api/orders/post/${id}`,
+        method:"POST",
+        headers: {
+          //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+        },
+        data:
+        {
+          category_order_id:value.category_order_id,
+          nama_kegiatan: value.nama_kegiatan,
+          tenant_id:value.tenant_id,
+          nama_instansi: value.nama_instansi,
+          jabatan:value.jabatan,
+          alamat_instansi:value.alamat_instansi,
+          tanggal_mulai:tanggalMulai,
+          tanggal_selesai: tanggalSelesai,
+        },
+      })
+      .then((response) => {
+        const result = response.data;
+        const { message, success, status, order_id } = result;
+        console.log(data)
         axios({
-          url:`http://6355-180-242-234-59.ngrok.io/api/orders/post/${id}`,
+          url:'https://sialbert.000webhostapp.com/teknisi/api/order/create',
           method:"POST",
           data:
           {
-            category_order_id:value.category_order_id,
+            id_orderan:order_id.kode_pesanan,
+            id_penyewa:value.tenant_id,
+            tgl_sewa:tgl_mulai,
+            tgl_masuk: tgl_selesai,
+            nama_perusahaan: value.nama_instansi,
+            alamat_perusahaan:value.alamat_instansi,
             nama_kegiatan: value.nama_kegiatan,
-            tenant_id:value.tenant_id,
-            nama_instansi: value.nama_instansi,
-            jabatan:value.jabatan,
-            alamat_instansi:value.alamat_instansi,
-            tanggal_mulai:tanggalMulai,
-            tanggal_selesai: tanggalSelesai,
+            alamat_kegiatan: value.alamat_kegiatan,
           },
         })
         .then((response) => {
           // const result = response.data;
           // const { message, success, status, data } = result;
-          console.log(response.data);
-          const datasKtp = new FormData();
-          datasKtp.append('ktp', {
-            name: 'ktp.jpg',
-            type: 'image/jpeg',
-            uri:  ktp,
-          });
+          console.log('response', response.data);
+        })
+        .catch((error)=> {
+          // console.error('error', error);
+          console.log(error.response)
+          handleMessage("Tidak ada koneksi internet!");
+        });
+        console.log(response.data);
+        const datasKtp = new FormData();
+        datasKtp.append('ktp', {
+          name: 'ktp.jpg',
+          type: 'image/jpeg',
+          uri:  ktp,
+        });
 
-          if (ktp != null) {
-            axios({
-              url:`http://6355-180-242-234-59.ngrok.io/api/orders/post/ktp/${id}`,
-              method:"POST",
-              data: datasKtp
-            })
-            .then((response) => {
-              const result = response.data;
-              const { message, success, status, hasil } = result;
-              items.map((item)=> {
+        if (ktp != null) {
+          axios({
+            url:`http://e565-180-242-214-45.ngrok.io/api/orders/post/ktp/${id}`,
+            method:"POST",
+            headers: {
+              //  'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+token,
+            },
+            data: datasKtp
+          })
+          .then((response) => {
+            console.log(response.data);
+            const result = response.data;
+            const { message, success, status, hasil } = result;
+            items.map((item)=> {
+              axios({
+                url:`http://e565-180-242-214-45.ngrok.io/api/detail-orders/post/${id}`,
+                method:"POST",
+                headers: {
+                  //  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer '+token,
+                },
+                data:
+                {
+                  order_id:hasil,
+                  equipment_id: item.product.id_alat,
+                },
+              })
+              .then((response) => {
+                const result = response.data;
+                const { message, success, status, details } = result;
+                console.log('details',details.id)
                 axios({
-                  url:`http://6355-180-242-234-59.ngrok.io/api/detail-orders/post/${id}`,
+                  url:'https://sialbert.000webhostapp.com/teknisi/equipments/detailOrder',
                   method:"POST",
                   data:
                   {
-                    order_id:hasil,
-                    equipment_id: item.product.id,
+                    id_orderan:order_id.kode_pesanan,
+                    detail_order_id: details.id,
+                    id_alat:item.product.id_alat,
+                    jumlah_hari:dayDiff,
+                    jumlah_jam: hoursDiff,
                   },
                 })
                 .then((response) => {
-                  const result = response.data;
-                  const { message, success, status } = result;
-                  console.log(response.data);
+                  // const result = response.data;
+                  // const { message, success, status, data } = result;
+                  console.log('response', response.data);
                 })
                 .catch((error)=> {
                   // console.error('error', error);
                   console.log(error.response)
-                  handleMessage("Gagal!");
+                  handleMessage("Tidak ada koneksi internet!");
                 });
+                console.log(response.data);
               })
-              Alert.alert("Berhasil", "Pengajuan Pemesanan Berhasil!", [
-                {
-                  text:"OK",
-                  onPress: () => navigation.navigate('pdfFormulirOrder', {order_id: hasil}),
-                },
-              ]);
-              console.log(response.data);
+              .catch((error)=> {
+                // console.error('error', error);
+                console.log(error.response)
+                handleMessage("Gagal!");
+              });
             })
-            .catch((error)=> {
-              // console.error('error', error);
-              console.log(error.response)
-              handleMessage("Format KTP haru dalam bentuk jpg, jpeg, png, pdf!");
-            });
-          } else {
-            alert('KTP tidak boleh kosong!');
-          }
-
-          const datasAktaNotaris = new FormData();
-
-          datasAktaNotaris.append('akta_notaris', {
-            name: 'akta_notaris.jpg',
-            type: 'image/jpeg',
-            uri:  aktaN,
+            console.log('hasil', hasil)
+            Alert.alert("Berhasil", "Pengajuan Pemesanan Berhasil!", [
+              {
+                text:"OK",
+                onPress: () => navigation.navigate('pdfFormulirOrder', {order_id: hasil}),
+              },
+            ]);
+            console.log(response.data);
+          })
+          .catch((error)=> {
+            // console.error('error', error);
+            console.log(error.response)
+            handleMessage("Format KTP haru dalam bentuk jpg, jpeg, png, pdf!");
           });
+        } else {
+          alert('KTP tidak boleh kosong!');
+        }
 
-          if (ktp != null) {
-            axios({
-              url:`http://6355-180-242-234-59.ngrok.io/api/orders/post/aktaNotaris/${id}`,
-              method:"POST",
-              data: datasAktaNotaris
-            })
-            .then((response) => {
-              console.log(response.data);
-            })
-            .catch((error)=> {
-              // console.error('error', error);
-              console.log(error.response)
-              handleMessage("Format Akta Notaris haru dalam bentuk jpg, jpeg, png, pdf!");
-            });
-          } else {
-            alert('KTP tidak boleh kosong!');
-          }
-  
-          const datasSuratPengantar = new FormData();
-          datasSuratPengantar.append('surat_ket', {
-            name: 'surat_ket.jpg',
-            type: 'image/jpeg',
-            uri:  suratP,
+        const datasAktaNotaris = new FormData();
+
+        datasAktaNotaris.append('akta_notaris', {
+          name: 'akta_notaris.jpg',
+          type: 'image/jpeg',
+          uri:  aktaN,
+        });
+
+        if (category_order_id == '1') {
+          axios({
+            url:`http://e565-180-242-214-45.ngrok.io/api/orders/post/aktaNotaris/${id}`,
+            method:"POST",
+            headers: {
+              //  'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+token,
+            },
+            data: datasAktaNotaris
+          })
+          .then((response) => {
+            console.log(response.data);
+          })
+          .catch((error)=> {
+            // console.error('error', error);
+            console.log(error.response)
+            handleMessage("Format Akta Notaris haru dalam bentuk jpg, jpeg, png, pdf!");
           });
-  
-          if (ktp != null) {
+        }
+
+        const datasSuratPengantar = new FormData();
+        datasSuratPengantar.append('surat_ket', {
+          name: 'surat_ket.jpg',
+          type: 'image/jpeg',
+          uri:  suratP,
+        });
+
+        if (category_order_id == '3' || category_order_id == '4') {
+          if(aktaN != null){
             axios({
-              url:`http://6355-180-242-234-59.ngrok.io/api/orders/post/suratPengantar/${id}`,
+              url:`http://e565-180-242-214-45.ngrok.io/api/orders/post/suratPengantar/${id}`,
               method:"POST",
+              headers: {
+                //  'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer '+token,
+              },
               data: datasSuratPengantar
             })
             .then((response) => {
@@ -343,26 +429,27 @@ export default function FormulirOrder({navigation, route}) {
               handleMessage("Format Surat Pengantar dari RT/RW/Lurah harus dalam bentuk jpg, jpeg, png, pdf!");
             });
           } else {
-            alert('KTP tidak boleh kosong!');
+            alert('Surat Pengantar tidak boleh kosong!');
           }
-          console.log(response.data);
-        })
-        .catch((error)=> {
-          // console.error('error', error);
-          console.log(error.response)
-          handleMessage("Tidak ada koneksi internet!");
-        });
-      } else {
-        alert('KTP tidak boleh kosong!');
-        setVisible(false);
-        setIsDisabled(false);
-      }
-    }
-    else {
-      alert('Jangka waktu penyewaan tidak boleh 0. Harap masukkan jangka waktu penyewaan!');
+        }
+        console.log(response.data);
+      })
+      .catch((error)=> {
+        // console.error('error', error);
+        console.log(error.response)
+        handleMessage("Tidak ada koneksi internet!");
+      });
+    } else {
+      alert('KTP tidak boleh kosong!');
       setVisible(false);
       setIsDisabled(false);
     }
+    // }
+    // else {
+    //   // alert('Jangka waktu penyewaan tidak boleh 0. Harap masukkan jangka waktu penyewaan!');
+    //   // setVisible(false);
+    //   // setIsDisabled(false);
+    // }
   };
 
   const handleMessage = (message, type = 'failed') => {
@@ -380,6 +467,7 @@ export default function FormulirOrder({navigation, route}) {
         initialValues={{
           category_order_id:value.category_order_id,
           nama_kegiatan: value.nama_kegiatan,
+          alamat_kegiatan: value.alamat_kegiatan,
           tenant_id:value.tenant_id,
           nama_instansi: value.nama_instansi,
           jabatan:value.jabatan,
@@ -442,13 +530,16 @@ export default function FormulirOrder({navigation, route}) {
                         <View>
                             <Text style={{ fontWeight:"bold", textAlign:"center", marginBottom:4 }}>Tanggal Mulai</Text>
                             <View style={styles.pickedDateContainer}>
-                                <Text style={styles.pickedDate}>{Moment(date1).format('DD MMMM YYYY HH:mm')}</Text>
+                                <Text style={styles.pickedDate}>{Moment(date1).format('DD MMMM YYYY')}</Text>
                             </View>
                             <TouchableOpacity onPress={showDatepicker}>
                                 <View style={styles.pickButton}>
                                     <Text style={styles.buttonTitle}>Atur Tanggal Ambil!</Text>
                                 </View>
                             </TouchableOpacity>
+                            <View style={styles.pickedTimeContainer}>
+                                <Text style={styles.pickedDate}>{Moment(date1).format('HH:mm')}</Text>
+                            </View>
                             <TouchableOpacity onPress={showTimepicker}>
                                 <View style={styles.pickButton}>
                                     <Text style={styles.buttonTitle}>Atur Jam Ambil!</Text>
@@ -458,13 +549,16 @@ export default function FormulirOrder({navigation, route}) {
                         <View>
                             <Text style={{ fontWeight:"bold", alignItems:'center', textAlign:"center", marginBottom:4 }}>Tanggal Selesai</Text>
                             <View style={styles.pickedDateContainer}>
-                                <Text style={styles.pickedDate}>{Moment(date2).format('DD MMMM YYYY HH:mm')}</Text>
+                                <Text style={styles.pickedDate}>{Moment(date2).format('DD MMMM YYYY')}</Text>
                             </View>
                             <TouchableOpacity onPress={showDatepicker2}>
                                 <View style={styles.pickButton}>
                                     <Text style={styles.buttonTitle}>Atur Tanggal Kembali!</Text>
                                 </View>
                             </TouchableOpacity>
+                            <View style={styles.pickedTimeContainer}>
+                                <Text style={styles.pickedDate}>{Moment(date2).format('HH:mm')}</Text>
+                            </View>
                             <TouchableOpacity onPress={showTimepicker2}>
                                 <View style={styles.pickButton}>
                                     <Text style={styles.buttonTitle}>Atur Jam Kembali!</Text>
@@ -501,6 +595,9 @@ export default function FormulirOrder({navigation, route}) {
                     {(dayDiff < 1 && hoursDiff>=1) &&
                       <Text style={{ margin: 16, fontWeight:'bold' }}> Total Jam : {hoursDiff} jam</Text>
                     }
+                    {(dayDiff < 1 && hoursDiff < 1 && minuteDiff != 0) &&
+                      <Text style={{ margin: 16, fontWeight:'bold' }}> Total Jam : 1 jam</Text>
+                    }
                   </Card>
                 </View>
             </View>
@@ -536,30 +633,48 @@ export default function FormulirOrder({navigation, route}) {
                     </View>
                 </View>
               </TouchableOpacity>
-              <TouchableOpacity onPress={pickAktaNotaris}>
-                <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
-                    <View style={{height: '100%', width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
-                      <Image source={Add} style={{ width: 45, height: 45 }}/>
-                      <View style={{ width:'80%' }}>
-                        <Text style={{ fontSize:18, fontWeight: 'bold', marginLeft: 16 }}>Akta Notaris (Opsional)</Text>
-                        <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
-                        <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
+              {category_order_id == '1' &&
+                <TouchableOpacity onPress={pickAktaNotaris}>
+                  <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
+                      <View style={{height: '100%', width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
+                        <Image source={Add} style={{ width: 45, height: 45 }}/>
+                        <View style={{ width:'80%' }}>
+                          <Text style={{ fontSize:18, fontWeight: 'bold', marginLeft: 16 }}>Akta Notaris (Opsional)</Text>
+                          <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
+                          <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
+                        </View>
                       </View>
-                    </View>
-                </View>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={pickSuratPengantar}>
-                <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
-                    <View style={{height: '100%', width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
-                      <Image source={Add} style={{ width: 45, height: 45 }}/>
-                      <View  style={{ width:'80%' }}>
-                        <Text style={{ fontSize:16, fontWeight: 'bold', marginLeft: 16}}>Surat Pengantar dari RT/RW/Lurah (Opsional)</Text>
-                        <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
-                        <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
+                  </View>
+                </TouchableOpacity>
+              }
+              {category_order_id == '3' &&
+                <TouchableOpacity onPress={pickSuratPengantar}>
+                  <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
+                      <View style={{height: '100%', width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
+                        <Image source={Add} style={{ width: 45, height: 45 }}/>
+                        <View  style={{ width:'80%' }}>
+                          <Text style={{ fontSize:16, fontWeight: 'bold', marginLeft: 16}}>Surat Pengantar dari RT/RW/Lurah/Dinas Terkait (Opsional)</Text>
+                          <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
+                          <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
+                        </View>
                       </View>
-                    </View>
-                </View>
-              </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              }
+              {category_order_id == '4' &&
+                <TouchableOpacity onPress={pickSuratPengantar}>
+                  <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
+                      <View style={{height: '100%', width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
+                        <Image source={Add} style={{ width: 45, height: 45 }}/>
+                        <View  style={{ width:'80%' }}>
+                          <Text style={{ fontSize:16, fontWeight: 'bold', marginLeft: 16}}>Surat Pengantar dari RT/RW/Lurah/Dinas Terkait (Opsional)</Text>
+                          <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
+                          <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
+                        </View>
+                      </View>
+                  </View>
+                </TouchableOpacity>
+              }
               <View>
             </View>
             {/* {!isSubmitting &&
@@ -590,6 +705,14 @@ export default function FormulirOrder({navigation, route}) {
                 autoCorrect={false}
                 returnKeyType="next"
                 onChangeText={handleChange('nama_kegiatan')}
+                editable={false}
+                type="hidden"
+              />
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+                onChangeText={handleChange('alamat_kegiatan')}
                 editable={false}
                 type="hidden"
               />
@@ -764,7 +887,7 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 4,
     padding: 8
   },
   pickedDateContainer: {
@@ -773,6 +896,14 @@ const styles = StyleSheet.create({
     borderColor: '#ffcd04',
     borderWidth: 3,
     borderRadius: 10,
+  },
+  pickedTimeContainer: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderColor: '#ffcd04',
+    borderWidth: 3,
+    borderRadius: 10,
+    marginTop:8
   },
   pickedDate: {
       color: '#ffcd04',

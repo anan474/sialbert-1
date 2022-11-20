@@ -1,65 +1,122 @@
 import React, {useContext} from 'react';
-import { StyleSheet, Text, View, Image, FlatList, Alert, Pressable, ActivityIndicator, SafeAreaView, TextInput, Modal, TouchableOpacity, Dimensions, ImageBackground, Button } from "react-native";
+import { StyleSheet, Alert, Text, View, Image, FlatList, ActivityIndicator, TextInput, Pressable, ToastAndroid, SafeAreaView, TouchableOpacity, Modal, Dimensions, ImageBackground, Button } from "react-native";
 import { useState, useEffect } from "react";
 
-import FloatingTabBar from "../components/FloatingTabBar";
 import { ScrollView } from "react-native-gesture-handler";
 import { Asset } from 'expo-asset';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons'
+import { Ionicons } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Card, Badge } from 'react-native-paper';
-import Moment from 'moment';
-import ActivityIndicatorExample  from "../components/ActivityIndicatorExample";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CredentialsContext } from './../components/CredentialsContext';
 const win = Dimensions.get("window");
 import logo from "../assets/icon.png";
-import axios from 'axios';
-import { Formik, form } from 'formik';
-import * as yup from 'yup';
+import Moment from 'moment';
+import { Card, Badge } from 'react-native-paper';
+// import { downloadToFolder } from 'expo-file-dl';
+// import { Constants } from 'react-native-unimodules';
+import ActivityIndicatorExample  from "../components/ActivityIndicatorExample";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { StatusBar } from 'expo-status-bar';
+import * as FileSystem from 'expo-file-system';
+import * as Notifications from "expo-notifications";
+import * as Permissions from "expo-permissions";
+import * as MediaLibrary from 'expo-media-library';
+import * as Print from 'expo-print';
+import { shareAsync } from 'expo-sharing';
 import { useIsFocused } from '@react-navigation/native';
+import axios from 'axios';
+import * as yup from 'yup';
+
+import Rent from "../assets/image/rent-active.png";
+
+import {
+  AndroidImportance,
+  AndroidNotificationVisibility,
+  NotificationChannel,
+  NotificationChannelInput,
+  NotificationContentInput,
+} from "expo-notifications";
+import { downloadToFolder } from "expo-file-dl";
+import { eachWeekOfInterval } from 'date-fns/fp';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
+
+const channelId = "DownloadInfo";
 
 export default function DetailOrder({ navigation, route }) {
+  // const {nama, email} = route.params;
   const {order} = route.params;
   const [message, setMessage] = useState();
   const [messageType, setMessageType] = useState();
   const [data, setData] = useState([]);
-  const [skr, setSkr] = useState({});
-  const [payment, setPayment] = useState([]);
   const [equipments, setEquipments] = useState([]);
+  const [alats, setAlats] = useState([]);
   const [page, setPage] = useState(1);
   const [text, setText] = useState('');
-  const [alasan, setAlasan] = useState('');
-  const [detail_order_id, setDetailOrderId] = useState();
   const [cari, setCari] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [skr, setSkr] = useState({});
+  const [payment, setPayment] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
-  const isFocused = useIsFocused();
+  const [alasan, setAlasan] = useState('');
+  const [detail_order_id, setDetailOrderId] = useState();
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
+  const {nama, email, id, token} = storedCredentials;
+  const isFocused = useIsFocused();
   const alat = [...order.alat]
+  const equipment = [order?.equipment]
+  var dtMulai = order.tanggal_mulai
+  var dtSelesai = order.tanggal_selesai
+  var order_id = order.id
   const total_hari = order.total_hari
   const total_jam = order.total_jam
-  const harga_perhari = alat?.[0]?.harga_sewa_perhari * total_hari
-  const harga_perjam = alat?.[0]?.harga_sewa_perjam * total_jam
-  const sum = harga_perhari + harga_perjam
-  const nama = alat?.[0]?.nama
-  const id_order=order.id
-  const id_alat = order.id
-  const total_harga_perhari = alat.reduce((total,item)=>{
-    const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
-    return total + harga_sewa_perhari;
-  },0)
-  const total_harga_perjam= alat.reduce((total,item)=>{
-    const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
-    return total + harga_sewa_perjam;
-  },0)
+  var category_order_id = order.category_order_id
+  console.log(category_order_id)
+  const handleMessage = (message, type = 'failed') => {
+    setMessage(message);
+    setMessageType(type);
+  }
+  const openSettingModal = (detail_order_id) => {
+    setDetailOrderId(detail_order_id);
+    setModalVisible(!modalVisible);
+  }
 
+  const letHide = () => {
+    if (visible === true) {
+      setVisible(false)
+    } else {
+      setVisible(true)
+    }
+  }
+
+  const doYourTask = () => {
+    setIsDisabled(true);
+  }
+  // const [downloadProgress, setDownloadProgress] = useState(0);
+
+  const id_order=order.id
   useEffect(async() => {
+    let isMounted = true
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/orders')
+    const url = 'http://e565-180-242-214-45.ngrok.io/api/detail-orders/'+id_order
+    fetch(url,
+    {
+      method: "GET",
+      headers: {
+        //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+      }})
+    // fetch('http://e565-180-242-214-45.ngrok.io/api/detail-orders/'+id_order)
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -68,31 +125,40 @@ export default function DetailOrder({ navigation, route }) {
       })
       // .finally(() => setLoading(false));
       .catch(error => { console.log; });
-
-  }, [isFocused]);
+  }, []);
+  // const detail = [...order.data]
+  // const ek= data?.[0]?.detail
+  // const tes = [...data?.[0]?.detail]
+  // const detail=data?.[0]?.detail
+  const detail=order.alat
+  console.log('harga', order.total_harga)
+  const a = order.alat
+  console.log('aaa', a)
+  console.log('detail', detail)
+  const tes=detail
+  const total_harga=data?.[0]?.sum
+  const eq=order.alat
+    // const order_id = alat.order_idy
+    const total_harga_perhari = eq.reduce((total,item)=>{
+      const harga_sewa_perhari = total_hari * item?.[0]?.alat.harga_sewa_perhari
+      return total + harga_sewa_perhari;
+    },0)
+    const total_harga_perjam = eq.reduce((total,item)=>{
+      const harga_sewa_perjam = total_jam * item?.[0]?.alat.harga_sewa_perjam
+      return total + harga_sewa_perjam;
+    },0)
 
   useEffect(async() => {
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/detail-orders')
-      .then((response) => response.json())
-      .then((hasil) => {
-        setEquipments(hasil);
-        setCari(hasil);
-        setIsLoading(false);
-      })
-      // .finally(() => setLoading(false));
-      .catch(error => { console.log; });
-
-  }, [isFocused]);
-  var idLocale=require('moment/locale/id');
-  Moment.locale('id');
-  var dtMulai = order.tanggal_mulai
-  var dtSelesai = order.tanggal_selesai
-  var order_id = order.id
-
-  useEffect(async() => {
-    setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/cekPayments/${order_id}`)
+    const url = 'http://e565-180-242-214-45.ngrok.io/api/cekPayments/'+order.id;
+    fetch(url,
+      {
+        method: "GET",
+        headers: {
+          //  'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer '+token,
+        }})
       .then((response) => response.json())
       .then((hasil) => {
         setPayment(hasil);
@@ -103,10 +169,47 @@ export default function DetailOrder({ navigation, route }) {
 
   }, [isFocused]);
 
-  console.log(payment.data)
+  const cekSkr = (credentials) => {
+    setIsLoading(true);
+    const url = `http://e565-180-242-214-45.ngrok.io/api/cekSkr/${id_order}`;
+    handleMessage(null);
 
-  // const tes = [...payment.data]
-  // console.log(tes.konfirmasi_pembayaran)
+    axios
+      .get(url,
+        {
+          method: "GET",
+          headers: {
+            //  'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer '+token,
+          }
+        }, credentials)
+      .then((response) => {
+        const result = response.data;
+        const { message, success, status, data } = result;
+        // console.log(response.data);
+
+        if (success == false) {
+          // navigation.navigate('MenuUtama');
+          // navigation.navigate('MenuUtama');
+          // persistLogin({ ...data[0] }, message, status);
+          Alert.alert("Surat Ketetapan Retribusi (SKR) belum terbit!", "Lakukan pembayaran jika SKR telah terbit!", [
+            {
+              text:"OK",
+              onPress: () => {},
+            },
+          ]);
+          setIsLoading(false);
+        }
+        else if (success == true) {
+          navigation.navigate('Pembayaran', {id_order: id_order, skr: data.skr, dateSkr: data.created_at, total_harga: total_harga})
+        }
+    })
+
+    .catch((error)=> {
+      console.error('error', error);
+    });
+  };
 
   const batalValidationSchema = yup.object().shape({
     alasan: yup
@@ -114,18 +217,19 @@ export default function DetailOrder({ navigation, route }) {
       .required('Alasan wajib diisi!'),
   })
 
-  const detail_id = order.id
-  console.log(detail_id)
-
   const handleAjukanPembatalan = (detail_order_id) => {
     handleMessage(null);
     setAlasan(alasan)
-    console.log(detail_order_id)
 
     if(alasan !== ''){
       axios({
-        url:`http://6355-180-242-234-59.ngrok.io/api/pembatalan/${detail_order_id}`,
+        url:`http://e565-180-242-214-45.ngrok.io/api/pembatalan/${detail_order_id}`,
         method:"POST",
+        headers: {
+          //  'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer '+token,
+        },
         data:
         {
           alasan:alasan,
@@ -145,9 +249,13 @@ export default function DetailOrder({ navigation, route }) {
         }
         else if (message == 'Masa penyewaan telah berakhir') {
           Alert.alert("Anda tidak dapat melakukan pembatalan.", "Masa penyewaan telah berakhir.");
+          setVisible(false);
+          setIsDisabled(false);
         }
-        else if (message == 'Kembalikan alat terlebih dahulu!') {
-          Alert.alert("Tidak dapat melakukan pembatalan jika sedang memakai alat.", "Kembalikan alat terlebih dahulu untuk melakukan pembatalan dan mengajukan pegembalian dana!");
+        else if (message == 'Alat Telah Dipakai!') {
+          Alert.alert("Tidak dapat melakukan pembatalan jika telah memakai alat.");
+          setVisible(false);
+          setIsDisabled(false);
         }
       })
       .catch((error)=> {
@@ -160,78 +268,136 @@ export default function DetailOrder({ navigation, route }) {
     }
   }
 
-  useEffect(async() => {
-    let isMounted = true
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/cekSkr/${id_order}`)
-      .then((response) => response.json())
-      .then((hasil) => {
-        setSkr(hasil);
-      })
-      // .finally(() => setLoading(false));
-      .catch(error => { console.log; });
-  }, [isFocused]);
+  // const total_harga_perhari = tes.reduce((total,item)=>{
+  //   const harga_sewa_perhari = total_hari * item.alat?.[0].harga_sewa_perhari
+  //   return total + harga_sewa_perhari;
+  // },0)
 
-  const handleMessage = (message, type = 'failed') => {
-    setMessage(message);
-    setMessageType(type);
-  }
+  // const total_harga_perjam = tes.reduce((total,item)=>{
+  //   const harga_sewa_perjam = total_hari * item.alat?.[0].harga_sewa_perjam
+  //   return total + harga_sewa_perjam;
+  // },0)
 
-  const openSettingModal = (detail_order_id) => {
-    setDetailOrderId(detail_order_id);
-    setModalVisible(!modalVisible);
-  }
+    // const total_harga_perhari = detail.reduce((total,item)=>{
+    //   const harga_sewa_perhari = total_hari * item?.[0]?.harga_sewa_perhari
+    //   return total + harga_sewa_perhari;
+    // },0)
+    // const total_harga_perjam= detail.reduce((total,item)=>{
+    //   const harga_sewa_perjam = total_jam * item?.[0]?.harga_sewa_perjam
+    //   return total + harga_sewa_perjam;
+    // },0)
 
-  const letHide = () => {
-    if (visible === true) {
-      setVisible(false)
-    } else {
-      setVisible(true)
-    }
-  }
+    // if(total_hari >0){
+    //   var total_harga= total_harga_perhari
+    // }else{
+    //   var total_harga= total_harga_perjam
+    // }
+  // const listOrders = ({item}) => {
+  //   const inisialValue = 0
+  //   var i;
+  //   const nama_alat=item.nama_alat
+  //   var idLocale=require('moment/locale/id');
+  //   Moment.locale('id');
+  //   console.log(item.alat?.[0].nama_alat)
+  //   var detail_order_id=item.id
+  //   console.log('detail order id', item.id)
 
-  const doYourTask = () => {
-    setIsDisabled(true);
-  }
-
-  console.log(skr)
+  //   return (
+  //     <>
+  //       <ScrollView>
+  //         <View style={{ flex: 1 }}>
+  //           <Card key={item.alat?.[0].id_alat} {...item} style={styles.card3}>
+  //             <View style={{ flexDirection:'row', justifyContent: "space-between", paddingHorizontal:8}}>
+  //               <View style={{ flexDirection:'row' }}>
+  //                 <Image source={{ uri:'https://sialbert.000webhostapp.com/'+item.alat?.[0].foto +'/' +item.alat?.[0].foto }} style={{ width:58, height:58, marginRight:8, marginTop: 8 }} />
+  //                 <View style={{ justifyContent:'center', textAlignVertical:'center' }}>
+  //                   <Text>{item.alat?.[0].nama_alat}</Text>
+  //                   <Text>x1</Text>
+  //                 </View>
+  //               </View>
+  //             </View>
+  //             {order.total_hari > 0 ?
+  //               <View style={{ flexDirection:'row', marginHorizontal: 16, justifyContent:'space-between' }}>
+  //                 <View style={{ flexDirection:'row' }}>
+  //                   {category_order_id == '1' &&
+  //                     <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{item.alat?.[0].harga_sewa_perhari},-</Text>
+  //                   }
+  //                   <Text style={{ justifyContent:'center', textAlignVertical:'center', fontWeight:'bold' }}> X</Text>
+  //                   <Text style={{ justifyContent:'center', textAlignVertical:'center' }}> {total_hari} Hari</Text>
+  //                 </View>
+  //                 {category_order_id == '1' &&
+  //                   <Text style={{ margin: 16 }}>Rp.{(item.alat?.[0].harga_sewa_perhari * total_hari)},-</Text>
+  //                 }
+  //               </View>:
+  //               <View style={{ flexDirection:'row', marginHorizontal: 16, justifyContent:'space-between' }}>
+  //                 <View style={{ flexDirection:'row' }}>
+  //                   {category_order_id == '1' &&
+  //                     <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{item.alat?.[0].harga_sewa_perjam},-</Text>
+  //                   }
+  //                   <Text style={{ justifyContent:'center', textAlignVertical:'center', fontWeight:'bold' }}> X</Text>
+  //                   <Text style={{ justifyContent:'center', textAlignVertical:'center' }}> {total_jam} Jam</Text>
+  //                 </View>
+  //                 {category_order_id == '1' &&
+  //                   <Text style={{ margin: 16 }}>Rp.{(item.alat?.[0].harga_sewa_perjam * total_jam)},-</Text>
+  //                 }
+  //               </View>
+  //             }
+  //             <View style={styles.border2}/>
+  //             <View style={{ paddingHorizontal:16, width: '100%' }}>
+  //               <TouchableOpacity
+  //                 onPress={() => navigation.navigate('Pengajuan Perubahan Jadwal', {dtMulai: dtMulai, dtSelesai: dtSelesai, reschedule: item, order_id: order.id})}
+  //               >
+  //                 <View>
+  //                   <View style={{flexDirection:'row', justifyContent: "space-between"}}>
+  //                     <Text>Ajukan Perubahan Jadwal</Text>
+  //                     <MaterialCommunityIcons name="arrow-right" size={24} color='#FAD603'/>
+  //                   </View>
+  //                 </View>
+  //               </TouchableOpacity>
+  //             </View>
+  //             <View style={styles.border2}/>
+  //             <View style={{ paddingHorizontal:16, width: '100%' }}>
+  //               <TouchableOpacity
+  //                 onPress={() => openSettingModal(detail_order_id)}
+  //               >
+  //                 <View>
+  //                   <View style={{flexDirection:'row', justifyContent: "space-between"}}>
+  //                     <Text>Ajukan Pembatalan</Text>
+  //                     <MaterialCommunityIcons name="arrow-right" size={24} color='#FAD603'/>
+  //                   </View>
+  //                 </View>
+  //               </TouchableOpacity>
+  //             </View>
+  //           </Card>
+  //         </View>
+  //       </ScrollView>
+  //     </>
+  //   );
+  // }
 
   return (
-    <SafeAreaView style={{ justifyContent: 'center', flexDirection: "row", flex:1}}>
-      {isLoading &&
+    <>
+      {isLoading ?
         <View style={{
           justifyContent: 'center',
           textAlign: 'center',
           textAlignVertical: 'center',
+          marginTop:0,
           textAlign: 'center',
           flex: 1,
           alignItems: 'center'
         }}>
           <ActivityIndicatorExample style={ styles.progress }/>
-        </View>
-      }
-      {!isLoading &&
-        <ScrollView style={{ paddingBottom:8}}>
-          <SafeAreaView>
-            <Card style={{ backgroundColor: '#fff', paddingBottom:32}}>
+        </View> : (
+          <ScrollView style={{ paddingBottom:8, backgroundColor: '#fff'}}>
+            <Card style={{ backgroundColor: '#fff', height: '100%', paddingBottom:32}}>
               <View style={{ flexDirection:'row', justifyContent: "space-between", height: 48, backgroundColor: '#25185A'}}>
                 <Image style={styles.icon} source={logo} />
-                <Text style={{ marginRight:16, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Kode Pemesanan ALB-{order.id}</Text>
+                <Text style={{ marginRight:16, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Kode Pemesanan: {order.kode_pesanan}</Text>
               </View>
               <View style={{ padding:16 }}>
-                {payment.status == '1' &&
-                  <Badge style={{ backgroundColor:'#ffcd04' }}>{payment.message}</Badge>
-                }
-                {payment.status == '2' &&
-                  <Badge style={{ backgroundColor:'green' }}>{payment.message}</Badge>
-                }
-                {payment.status == '3' &&
-                  <Badge>{payment.message}</Badge>
-                }
-                {payment.status == '4' &&
-                  <Badge>{payment.message}</Badge>
-                }
                 <Card style={styles.card}>
-                  <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:15, borderTopRightRadius:15}}>
+                  <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:13, borderTopRightRadius:13}}>
                     <Text style={{ marginLeft:16, marginTop:14, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Jangka Waktu Penyewaan</Text>
                   </View>
                   <View style={{ flexDirection:'row', justifyContent: "space-between", padding:8}}>
@@ -254,81 +420,89 @@ export default function DetailOrder({ navigation, route }) {
                   }
                 </Card>
                 <Card style={styles.card2}>
-                  <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:15, borderTopRightRadius:15}}>
+                  <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:13, borderTopRightRadius:13}}>
                     <Text style={{ marginLeft:16, marginTop:14, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Detail Orderan</Text>
                   </View>
-                  {alat.map((item)=>
-                    <Card key={item.id} {...item} style={styles.card3}>
+                  {detail.map((item)=>
+                    <Card key={item?.[0].detail_order.id} {...item} style={styles.card3}>
                       {(() => {
+                        const harga_sewa_perhari = item.alat?.[0].harga_sewa_perhari
                         const detail_order_id = item.id
-                        console.log(detail_order_id)
+                        console.log('bbb', item?.[0].nama_alat)
                         return(
                           <View>
                             <View style={{ flexDirection:'row', justifyContent: "space-between", paddingHorizontal:8}}>
                               <View style={{ flexDirection:'row' }}>
-                                <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+item.foto }} style={{ width:58, height:58, marginRight:8, marginTop: 8 }} />
+                                <Image source={{ uri:'https://sialbert.000webhostapp.com/'+item?.[0].alat.foto +'/' +item?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8, marginTop: 8 }} />
                                 <View style={{ justifyContent:'center', textAlignVertical:'center' }}>
-                                  <Text>{item.nama}</Text>
-                                  <Text>x1</Text>
+                                  <Text>{item?.[0].alat.nama_alat}</Text>
                                 </View>
                               </View>
                             </View>
                             {order.total_hari > 0 ?
                               <View style={{ flexDirection:'row', marginHorizontal: 16, justifyContent:'space-between' }}>
                                 <View style={{ flexDirection:'row' }}>
-                                  <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{item.harga_sewa_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                                  {category_order_id == '1' &&
+                                    <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{Number(item?.[0].alat.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                  }
                                   <Text style={{ justifyContent:'center', textAlignVertical:'center', fontWeight:'bold' }}> X</Text>
                                   <Text style={{ justifyContent:'center', textAlignVertical:'center' }}> {total_hari} Hari</Text>
                                 </View>
-                                <Text style={{ margin: 16 }}>Rp.{(item.harga_sewa_perhari * total_hari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                                {category_order_id == '1' &&
+                                  <Text style={{ margin: 16 }}>Rp.{Number(item?.[0].alat.harga_sewa_perhari * total_hari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
                               </View>:
                               <View style={{ flexDirection:'row', marginHorizontal: 16, justifyContent:'space-between' }}>
                                 <View style={{ flexDirection:'row' }}>
-                                  <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{item.harga_sewa_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                                  {category_order_id == '1' &&
+                                    <Text style={{ justifyContent:'center', textAlignVertical:'center' }}>Rp.{Number(item?.[0].alat.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                  }
                                   <Text style={{ justifyContent:'center', textAlignVertical:'center', fontWeight:'bold' }}> X</Text>
                                   <Text style={{ justifyContent:'center', textAlignVertical:'center' }}> {total_jam} Jam</Text>
                                 </View>
-                                <Text style={{ margin: 16 }}>Rp.{(item.harga_sewa_perjam * total_jam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                                {category_order_id == '1' &&
+                                  <Text style={{ margin: 16 }}>Rp.{Number(item?.[0].alat.harga_sewa_perjam * total_jam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                                }
                               </View>
                             }
-                            {/* <View style={styles.border2}/>
-                            <View style={{ paddingHorizontal:16, width: '100%' }}>
-                              <TouchableOpacity
-                                onPress={() => navigation.navigate('Pengajuan Perubahan Jadwal', {dtMulai: dtMulai, dtSelesai: dtSelesai, reschedule: item, order_id: order.id})}
-                              >
-                                <View>
-                                  <View style={{flexDirection:'row', justifyContent: "space-between"}}>
-                                    <Text>Ajukan Perubahan Jadwal</Text>
-                                    <MaterialCommunityIcons name="arrow-right" size={24} color='#FAD603'/>
-                                  </View>
-                                </View>
-                              </TouchableOpacity>
-                            </View>
                             <View style={styles.border2}/>
-                            <View style={{ paddingHorizontal:16, width: '100%' }}>
-                              <TouchableOpacity
-                                onPress={() => openSettingModal(detail_order_id)}
-                              >
-                                <View>
-                                  <View style={{flexDirection:'row', justifyContent: "space-between"}}>
-                                    <Text>Ajukan Pembatalan</Text>
-                                    <MaterialCommunityIcons name="arrow-right" size={24} color='#FAD603'/>
-                                  </View>
-                                </View>
-                              </TouchableOpacity>
-                            </View> */}
                           </View>
                         )
                       })()}
                     </Card>
                   )}
-                  <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
-                    <Text style={{ fontWeight:'bold', fontSize:16, fontWeight:'bold', margin:16 }}> Total :</Text>
-                    {total_hari > 0 ?
-                      <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>:
-                      <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
-                    }
-                  </View>
+                  {category_order_id == '1' &&
+                    <View style={{ flexDirection:'row', justifyContent:'space-between' }}>
+                      <Text style={{ fontWeight:'bold', fontSize:16, fontWeight:'bold', margin:16 }}> Total :</Text>
+                      {total_hari > 0 ?
+                        <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                        <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                      }
+                      {/* <Text style={{ textAlign:'right', fontSize:16, fontWeight:'bold', margin:16 }}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text> */}
+                    </View>
+                  }
+                  {/* {category_order_id == '1' &&
+                    <View>
+                      {payment.status == '3' &&
+                        <TouchableOpacity style={{ marginHorizontal: 16 }}
+                        // onPress={() => navigation.navigate('Pembayaran', {id_order: id_order})}>
+                        onPress={cekSkr}>
+                          <View style={styles.btnLanjut}>
+                            <Text style={styles.buttonTitle}>Lanjutkan Pembayaran</Text>
+                          </View>
+                        </TouchableOpacity>
+                      }
+                      {payment.status == '4' &&
+                        <TouchableOpacity style={{ marginHorizontal: 16 }}
+                        // onPress={() => navigation.navigate('Pembayaran', {id_order: id_order})}>
+                        onPress={cekSkr}>
+                          <View style={styles.btnLanjut}>
+                            <Text style={styles.buttonTitle}>Lanjutkan Pembayaran</Text>
+                          </View>
+                        </TouchableOpacity>
+                      }
+                    </View>
+                  } */}
                   <Modal
                     animationType="slide"
                     transparent={true}
@@ -385,24 +559,22 @@ export default function DetailOrder({ navigation, route }) {
                 </Card>
               </View>
             </Card>
-          </SafeAreaView>
-        </ScrollView>
-      }
-    </SafeAreaView>
+          </ScrollView>
+      )}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  back: {
-    backgroundColor: "#25185A",
-  },
-  container: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-    marginTop:-36,
-    height: '100%'
-  },
+  // back: {
+  //   backgroundColor: "#25185A",
+  // },
+  // container: {
+  //   backgroundColor: "#fff",
+  //   borderTopLeftRadius: 50,
+  //   borderTopRightRadius: 50,
+  //   // marginTop:-36,
+  // },
   button: {
     alignItems: 'center',
     backgroundColor: '#ffcd04',
@@ -428,14 +600,14 @@ const styles = StyleSheet.create({
     margin: 8
   },
 
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingBottom: 24,
-    height:108,
-    paddingHorizontal: 29,
-    backgroundColor: "#FAD603",
-  },
+  // headerContainer: {
+  //   flexDirection: "row",
+  //   alignItems: "center",
+  //   paddingBottom: 24,
+  //   height:108,
+  //   paddingHorizontal: 29,
+  //   backgroundColor: "#FAD603",
+  // },
   textHeader: {
     fontSize: 20,
     fontWeight: "bold",
@@ -544,16 +716,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius:15,
     borderTopRightRadius:15,
     marginTop:16,
-    marginBottom: 40,
     borderColor:'#2196F3',
-    borderWidth:2
+    borderWidth:2,
+    marginBottom:48
   },
   card3: {
     shadowOffset: {width:0, height:2},
     shadowOpacity: 0.5,
     width: '100%',
     borderColor:'#2196F3',
-    borderWidth:1
+    borderWidth:1,
   },
   icon: {
     width: 32,

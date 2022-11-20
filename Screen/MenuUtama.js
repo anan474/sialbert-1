@@ -19,6 +19,10 @@ import FloatingTabBar from "../components/FloatingTabBar";
 import More from "../assets/image/more.png";
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useIsFocused } from '@react-navigation/native';
+import Illust from "../assets/image/icon.png"
+import SVGImg from '../assets/wave.svg';
+import svg from '../assets/image/wave.png';
+import arrow from '../assets/image/arrow.png';
 
 const win = Dimensions.get("window");
 
@@ -53,7 +57,7 @@ export default function MenuUtama({navigation}) {
   useEffect(async() => {
     let isMounted = true
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/equipments')
+    fetch('https://sialbert.000webhostapp.com/teknisi/equipments/getAlat')
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -66,7 +70,7 @@ export default function MenuUtama({navigation}) {
 
   const cariData = (text) => {
     const newData = cari.filter((item) => {
-      const itemData = item.nama.toLowerCase();
+      const itemData = item.nama_alat.toLowerCase();
       const textData = text.toLowerCase();
       return itemData.indexOf(textData) > -1;
     });
@@ -77,8 +81,9 @@ export default function MenuUtama({navigation}) {
   const handleLoadMore = () => {
     console.warn('hanlemore')
   }
-
+  
   const listEquipments = ({item}) => {
+    const photo ='https://sialbert.000webhostapp.com/'+item.foto +'/' +item.foto
     return (
       <View>
         <TouchableOpacity
@@ -87,8 +92,8 @@ export default function MenuUtama({navigation}) {
         >
           <View style={styles.sectionNavContainer}>
             <View style={styles.myequipemntItem}>
-              <Image source={{uri: item.foto}} style={styles.myequipmentImage} />
-              <Text>{item.nama}</Text>
+              <Image source={{uri: photo }} style={styles.myequipmentImage} />
+              <Text>{item.nama_alat}</Text>
             </View>
           </View>
         </TouchableOpacity>
@@ -100,7 +105,7 @@ export default function MenuUtama({navigation}) {
     <>
       <View style={{ backgroundColor: '#FFFFFF' }}>
         <View style={styles.headerContainer}>
-          <Icon name="notifications" size={28} color='#ffcd04'/>
+          {/* <Icon name="notifications" size={28} color='#ffcd04'/> */}
           <Text style={styles.textHeader}>SI-ALBERT</Text>
           <TouchableOpacity style={{ padding: 5 }} onPress={() => {navigation.navigate('Cart')}}>
             <View style={{ position: 'absolute', height: 25, width: 25, borderRadius: 15, backgroundColor: 'green', right: 18, bottom: 18, alignItems: 'center', justifyContent: 'center', zIndex:2000 }}>
@@ -110,14 +115,14 @@ export default function MenuUtama({navigation}) {
           </TouchableOpacity>
         </View>
         <View style={styles.container}>
-          <View style={styles.textInput}>
+          {/* <View style={styles.textInput}>
             <Image style={styles.btnSearch} source={Search} />
             <TextInput
               onChangeText={(text) => cariData(text)}
               value={text}
               placeholder="Cari nama alat..."
             />
-          </View>
+          </View> */}
           <View style={{ alignItems:'center', textAlignVertical: 'center', marginTop: 0, justifyContent: 'center'}}>
             {isLoading ?
               <View style={{
@@ -132,13 +137,14 @@ export default function MenuUtama({navigation}) {
                 <ActivityIndicatorExample style={ styles.progress }/>
               </View> : (
               <>
-                <View style={{ alignItems:'center', textAlignVertical: 'center', marginTop: 0, justifyContent: 'center', flexDirection: "row", }}>
+                {/* <View style={{ alignItems:'center', textAlignVertical: 'center', marginTop: 0, justifyContent: 'center', flexDirection: "row", }}>
                   <FlatList
                     style={{ margin:8 }}
                     data={data}
                     vertical
                     // key={4}
                     numColumns={4}
+                    number={3}
                     fadingEdgeLength={10}
                     keyExtractor={item=>item.id}
                     renderItem={listEquipments}
@@ -147,11 +153,17 @@ export default function MenuUtama({navigation}) {
                     onEndReachedThreshold={0.5}
                     extraData={data}
                   />
-                </View>
-                <View style={{ alignItems:'center', textAlignVertical: 'center', marginTop: '-4%', justifyContent: 'center', flexDirection: "row", }}>
+                </View> */}
+                {/* <Image source={svg} style={{ position: 'absolute', top: 0 }}></Image> */}
+                <Image source={Illust} style={styles.deco}></Image>
+                <View style={{ alignItems:'center', textAlignVertical: 'center', justifyContent: 'center', flexDirection: "row", }}>
                   <TouchableOpacity style={{ alignItems:'center', textAlignVertical: 'center', justifyContent: 'center'}} onPress={() => navigation.navigate('Alat')}>
-                    <Image source={More} style={styles.myequipmentImage}/>
-                    <Text>Lihat alat lainnya</Text>
+                    {/* <Image source={More} style={styles.myequipmentImage}/> */}
+                    <View style={styles.btn}>
+                      <Text style={styles.buttonTitle}>Lihat Alat</Text>
+                      <Image source={arrow} style={styles.arrow}/>
+                    </View>
+                    {/* <Text>Lihat alat</Text> */}
                   </TouchableOpacity>
                 </View>
               </>
@@ -207,6 +219,14 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
   },
+  buttonTitle: {
+    alignItems: 'center',
+    textAlign: 'center',
+    marginTop: 0,
+    color: '#fff',
+    fontWeight: '600',
+    lineHeight: 22,
+  },
   greeting: {
     flexDirection: "row",
     marginTop: 24,
@@ -255,6 +275,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 75,
   },
+  arrow: {
+    width: 36,
+    height: 24,
+    marginLeft: 8
+  },
   // myequipmentImage: {
   //   flex:1,
   //   width: '80%',
@@ -289,7 +314,11 @@ const styles = StyleSheet.create({
     height: 18,
     marginEnd: 8,
     marginVertical: 8,
-  }, 
+  },
+  deco: {
+    width: '60%',
+    height: '50%'
+  },
   progress: {
     textAlign: 'center',
     flex: 1,
@@ -302,5 +331,16 @@ const styles = StyleSheet.create({
   lainnya: {
     justifyContent: 'center',
     textAlign: 'center',
-  }
+  },
+  btn: {
+    backgroundColor: '#ffcd04',
+    borderRadius: 8,
+    height: 48,
+    justifyContent: 'center',
+    textAlign: 'center',
+    padding:12,
+    width: '100%',
+    marginTop: 16,
+    flexDirection:'row',
+  },
 });

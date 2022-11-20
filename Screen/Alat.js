@@ -44,7 +44,7 @@ export default function MenuUtama({navigation}) {
   useEffect(async() => {
     let isMounted = true
     setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/equipments-all')
+    fetch('https://sialbert.000webhostapp.com/teknisi/equipments')
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
@@ -62,7 +62,7 @@ export default function MenuUtama({navigation}) {
 
   const cariData = (text) => {
     const newData = cari.filter((item) => {
-      const itemData = item.nama.toLowerCase();
+      const itemData = item.nama_alat.toLowerCase();
       const textData = text.toLowerCase();
       return itemData.indexOf(textData) > -1;
     });
@@ -97,6 +97,7 @@ export default function MenuUtama({navigation}) {
   };
 
   const listEquipments = ({item}) => {
+    const photo ='https://sialbert.000webhostapp.com/' +item.foto + '/' +item.foto
     return (
       <>
         <View>
@@ -106,8 +107,8 @@ export default function MenuUtama({navigation}) {
           >
             <View style={{ flexDirection:'row', textAlign:'center', textAlignVertical: 'center'}}>
               <View style={{ flexDirection:'row', margin:16, textAlign:'center', textAlignVertical: 'center',justifyContent: 'center' }}>
-                <Image source={{uri: item.foto}} style={styles.myequipmentImage} />
-                <Text style={{ marginTop: '23%', textAlign:'center', justifyContent:'center', marginLeft:16 }}>{item.nama}</Text>
+                <Image source={{uri: photo}} style={styles.myequipmentImage} />
+                <Text style={{ marginTop: '23%', textAlign:'center', justifyContent:'center', marginLeft:16 }}>{item.nama_alat}</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -165,7 +166,7 @@ export default function MenuUtama({navigation}) {
                 nestedScrollEnabled
                 // fadingEdgeLength={10}
                 ItemSeparatorComponent={ItemDivider}
-                keyExtractor={item=>item.id}
+                keyExtractor={item=>item.id_alat}
                 renderItem={listEquipments}
                 onEndReached={renderFooter}
                 onEndReachedThreshold={0.5}

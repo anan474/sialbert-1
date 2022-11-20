@@ -41,8 +41,20 @@ import picture_account from "../assets/image/acount-inactive.png";
     const [fileContent, setFileContent] = useState(null);
     const [fileUri, setFileUri] = useState('');
     const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-    const {nama, email, no_hp, foto, kontak_darurat, alamat, id} = storedCredentials;
+    const {nama, email, no_hp, foto, kontak_darurat, alamat, id,token, username} = storedCredentials;
     const isFocused = useIsFocused();
+
+    const persistLogin = (credentials, message, status) => {
+      AsyncStorage.setItem('sialbertCredentials', JSON.stringify(credentials))
+      .then(() => {
+        handleMessage(message, status);
+        setStoredCredentials(credentials);
+      })
+      .catch((error) => {
+        console.log(error);
+        handleMessage('Persisting login failed');
+      })
+    }
 
     const pickImage = async () => {
       // No permissions request is necessary for launching the image library
@@ -63,7 +75,7 @@ import picture_account from "../assets/image/acount-inactive.png";
   const handleUploadPhoto = () => {
     handleMessage(null);
     setIsLoading(true);
-    // const url = `http://6355-180-242-234-59.ngrok.io/api/updatePicture/${id}`;
+    // const url = `http://e565-180-242-214-45.ngrok.io/api/updatePicture/${id}`;
     const datas = new FormData();
 
     datas.append('foto', {
@@ -77,7 +89,7 @@ import picture_account from "../assets/image/acount-inactive.png";
     console.log(datas);
     if (image != null) {
       axios({
-        url:`http://6355-180-242-234-59.ngrok.io/api/updatePicture/${id}`,
+        url:`http://e565-180-242-214-45.ngrok.io/api/updatePicture/${id}`,
         method:"POST",
         data:datas
       })
@@ -134,7 +146,7 @@ import picture_account from "../assets/image/acount-inactive.png";
 
   const handleEditProfil = (credentials, setSubmitting) => {
     handleMessage(null);
-    const url = `http://6355-180-242-234-59.ngrok.io/api/editProfil/${id}`;
+    const url = `http://e565-180-242-214-45.ngrok.io/api/editProfil/${id}`;
 
     axios
       .post(url, credentials)
@@ -147,6 +159,7 @@ import picture_account from "../assets/image/acount-inactive.png";
           // navigation.navigate('MenuUtama');
           // navigation.navigate('MenuUtama');
           // persistLogin({ ...data[0] }, message, status);
+          persistLogin({ ...data[0] }, message, status);
           Alert.alert("Edit Profil", "Edit Profil Berhasil!", [
             {
               text:"OK",
@@ -185,6 +198,9 @@ import picture_account from "../assets/image/acount-inactive.png";
     nama: yup
       .string()
       .required('Nama wajib diisi!'),
+    username: yup
+      .string()
+      .required('Nama wajib diisi!'),
     email: yup
       .string()
       .email("Harap masukkan email yang valid!")
@@ -199,12 +215,22 @@ import picture_account from "../assets/image/acount-inactive.png";
       .string()
       .required('Alamat wajib diisi!'),
   })
+  console.log(token)
 
   useEffect(async() => {
     setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/cekUser/${id}`)
+    const {nama, email, no_hp, foto, kontak_darurat, alamat, id,token} = storedCredentials;
+    fetch(`http://e565-180-242-214-45.ngrok.io/api/cekUser/${id}`,
+    {
+      method: "GET",
+      headers: {
+        //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+      }})
       .then((response) => response.json())
       .then((hasil) => {
+        // console.log(token)
         setAvatar(hasil);
         setIsLoading(false);
       })
@@ -213,7 +239,7 @@ import picture_account from "../assets/image/acount-inactive.png";
 
   }, [isFocused]);
 
-  console.log(avatar.status)
+  console.log(avatar)
 
   return (
     <>
@@ -239,10 +265,10 @@ import picture_account from "../assets/image/acount-inactive.png";
                   {image ?
                     <Image source={{ uri: image, width: 90, height: 90 }} style={{ borderRadius: 70 }} /> :
                       <>
-                        {avatar.data =='http://6355-180-242-234-59.ngrok.io/storage/tenant/no-pict.png' &&
+                        {avatar.data =='http://e565-180-242-214-45.ngrok.io/storage/tenant/no-pict.png' &&
                           <Image source={picture_account} style={picture_account}></Image>
                         }
-                        {avatar.data!='http://6355-180-242-234-59.ngrok.io/storage/tenant/no-pict.png' &&
+                        {avatar.data!='http://e565-180-242-214-45.ngrok.io/storage/tenant/no-pict.png' &&
                           <>
                           <Image source={{uri: avatar.data, width: 90, height: 90}} style={{borderRadius: 70}}></Image>
                           </>
@@ -281,7 +307,7 @@ import picture_account from "../assets/image/acount-inactive.png";
               <Formik
                 validationSchema={editProfilValidationSchema}
                 // enableReinitialize={true}
-                initialValues={{  nama: nama, email: email, no_hp: no_hp, kontak_darurat: kontak_darurat, alamat: alamat, image:'tes.jpeg'}}
+                initialValues={{  id:id, nama: nama, username: username, email: email, no_hp: no_hp, kontak_darurat: kontak_darurat, alamat: alamat, image:'tes.jpeg'}}
                 // initialValues={data}
                 onSubmit={(values, {setSubmitting})  => {
                   handleEditProfil(values, setSubmitting);
@@ -293,6 +319,25 @@ import picture_account from "../assets/image/acount-inactive.png";
                     <View style={styles.border}></View>
                     <View>
                       <View style={styles.form}>
+                        <Text style={{ marginLeft:24, marginTop:4 }}>Username :</Text>
+                        <TextInput
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          returnKeyType="next"
+                          placeholder="Username"
+                          style={styles.textInput}
+                          onChangeText={handleChange('username')}
+                          onBlur={handleBlur('username')}
+                          defaultValue={avatar.username}
+                          editable={true}
+                        />
+                      </View>
+                      {(errors.username && touched.username) &&
+                        <Text style={{ fontSize: 10, color: 'red', marginLeft:24 }}>{errors.username}</Text>
+                      }
+                    </View>
+                    <View>
+                      <View style={styles.form}>
                         <Text style={{ marginLeft:24, marginTop:4 }}>Nama :</Text>
                         <TextInput
                           autoCapitalize="none"
@@ -302,7 +347,7 @@ import picture_account from "../assets/image/acount-inactive.png";
                           style={styles.textInput}
                           onChangeText={handleChange('nama')}
                           onBlur={handleBlur('nama')}
-                          defaultValue={nama}
+                          defaultValue={avatar.nama}
                           editable={true}
                         />
                       </View>
@@ -322,7 +367,7 @@ import picture_account from "../assets/image/acount-inactive.png";
                           placeholder="Email"
                           style={styles.textInput}
                           onChangeText={handleChange('email')}
-                          defaultValue={email}
+                          defaultValue={avatar.email}
                           editable={true}
                         />
                       </View>
@@ -388,6 +433,14 @@ import picture_account from "../assets/image/acount-inactive.png";
                       {(errors.alamat && touched.alamat) &&
                         <Text style={{ fontSize: 10, color: 'red', marginLeft:24 }}>{errors.alamat}</Text>
                       }
+                      <TextInput
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        returnKeyType="next"
+                        onChangeText={handleChange('id')}
+                        editable={false}
+                        type="hidden"
+                      />
                     </View>
                     {!isSubmitting &&
                     <View>

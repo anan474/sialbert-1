@@ -21,6 +21,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Print from 'expo-print';
 import { shareAsync } from 'expo-sharing';
 import { useIsFocused } from '@react-navigation/native';
+import axios from 'axios';
 
 import Rent from "../assets/image/rent-active.png";
 
@@ -49,13 +50,14 @@ export default function MenuUtama({navigation}) {
   // const {nama, email} = route.params;
   const [data, setData] = useState([]);
   const [equipments, setEquipments] = useState([]);
+  const [alats, setAlats] = useState([]);
   const [page, setPage] = useState(1);
   const [text, setText] = useState('');
   const [cari, setCari] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-  const {nama, email, id} = storedCredentials;
+  const {nama, email, id, token} = storedCredentials;
   const isFocused = useIsFocused();
 
   // const [downloadProgress, setDownloadProgress] = useState(0);
@@ -102,24 +104,17 @@ export default function MenuUtama({navigation}) {
   useEffect(async() => {
     let isMounted = true
     setIsLoading(true);
-    fetch(`http://6355-180-242-234-59.ngrok.io/api/orders/${id}`)
+    fetch(`http://e565-180-242-214-45.ngrok.io/api/orders/${id}`,
+    {
+      method: "GET",
+      headers: {
+        //  'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer '+token,
+      }})
       .then((response) => response.json())
       .then((hasil) => {
         setData(hasil);
-        setCari(hasil);
-        setIsLoading(false);
-      })
-      // .finally(() => setLoading(false));
-      .catch(error => { console.log; });
-  }, [isFocused]);
-
-  useEffect(async() => {
-    let isMounted = true
-    setIsLoading(true);
-    fetch('http://6355-180-242-234-59.ngrok.io/api/detail-orders')
-      .then((response) => response.json())
-      .then((hasil) => {
-        setEquipments(hasil);
         setCari(hasil);
         setIsLoading(false);
       })
@@ -133,24 +128,39 @@ export default function MenuUtama({navigation}) {
     var i;
     const total_hari = item.total_hari
     const total_jam = item.total_jam
-    const count = alat.length
-    const harga_perhari = alat?.[0]?.harga_sewa_perhari * total_hari
-    const harga_perjam = alat?.[0]?.harga_sewa_perjam * total_jam
+    const count = item.total_alat
     const sum = harga_perhari + harga_perjam
-    const nama = alat?.[0]?.nama
-    const order_id = alat?.[0]?.id
+    const order_id = item.id
+    // const nama_alat=alat?.[0]?.[0].alat.nama_alat
+    // console.log('alat',alat?.[0].alat?.[0].nama_alat)
+    const nama_alat=alat?.[0]?.[0].alat.nama_alat
+    const harga_perhari = alat?.[0]?.[0].alat.harga_sewa_perhari * total_hari
+    const harga_perjam = alat?.[0]?.[0].alat.harga_sewa_perjam * total_jam
+    // const harga_perjam = alat?.[0]?.[0]?.alat?.[0].harga_sewa_perjam * total_jam
+    const eq=alat
+    console.log('eq', eq)
     const total_harga_perhari = alat.reduce((total,item)=>{
-      const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
+      const harga_sewa_perhari = total_hari * item?.[0].alat.harga_sewa_perhari
       return total + harga_sewa_perhari;
     },0)
     const total_harga_perjam = alat.reduce((total,item)=>{
-      const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
+      const harga_sewa_perjam = total_jam * item?.[0].alat.harga_sewa_perjam
       return total + harga_sewa_perjam;
     },0)
-    // const sum = total.reduce(
-    //   (tot, jumlah) => tot +jumlah,
-    //   inisialValue
-    // )
+    const id_alat=alat?.[0]?.equipment_id
+    // console.log(id_alat)
+    // useEffect(() => {
+    //   let isMounted = true
+    //   setIsLoading(true);
+    //   fetch('https://sialbert.000webhostapp.com/teknisi/equipments/show/' +id_alat)
+    //     .then((response) => response.json())
+    //     .then((hasil) => {
+    //       setData(hasil);
+    //       setIsLoading(false);
+    //     })
+    //     // .finally(() => setLoading(false));
+    //     .catch(error => { console.log; });
+    // }, [isFocused]);
     var idLocale=require('moment/locale/id');
     Moment.locale('id');
     var dt = item.created_at
@@ -185,7 +195,8 @@ export default function MenuUtama({navigation}) {
                       if(item.ket_persetujuan_kepala_dinas === 'setuju'){
                         return(
                           <View style={{ borderWidth:2, borderRadius:8, borderColor: '#11CF00', alignItems:'center', padding:2}}>
-                            <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan telah disetujui</Text>
+                            <Text style={{ textAlign:'right', color:'#11CF00', alignItems: 'flex-end', justifyContent: 'flex-end', alignContent: 'flex-end'}}>Pengajuan
+                             disetujui</Text>
                           </View>
                         )
                       }
@@ -220,13 +231,20 @@ export default function MenuUtama({navigation}) {
                   <View style={{ margin:16 }}>
                     <Text>{item.nama_kegiatan}</Text>
                     <View style={{ flexDirection:'row', justifyContent: "space-between" }}>
-                      <Image source={{ uri:'http://6355-180-242-234-59.ngrok.io/storage/'+alat?.[0]?.foto }} style={{ width:58, height:58, marginRight:8 }} />
+                      <Image source={{ uri:'https://sialbert.000webhostapp.com/'+alat?.[0]?.[0].alat.foto +'/' +alat?.[0]?.[0].alat.foto }} style={{ width:58, height:58, marginRight:8 }} />
                       <View>
-                        <Text>{nama}</Text>
-                        <Text>x1</Text>
+                        <Text>{nama_alat}</Text>
                         {total_hari>0 ?
-                          <Text style={{ fontWeight:'bold' }}>Rp.{harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>:
-                          <Text style={{ fontWeight:'bold' }}>Rp.{harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                          <Text>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perhari).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                          <Text>Rp.{Number(alat?.[0]?.[0].alat.harga_sewa_perjam).toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
+                        }
+                        {total_hari>0 ?
+                          <Text>x{total_hari} hari</Text>:
+                          <Text>x{total_jam} jam</Text>
+                        }
+                        {total_hari>0 ?
+                          <Text style={{ fontWeight:'bold' }}>Rp.{harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                          <Text style={{ fontWeight:'bold' }}>Rp.{harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
                         }
                       </View>
                     </View>
@@ -236,22 +254,11 @@ export default function MenuUtama({navigation}) {
                       <View style={{ flexDirection: 'row', marginTop:4 }}>
                         <Text>Total Pesanan:</Text>
                         {total_hari>0 ?
-                          <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>:
-                          <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
+                          <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>:
+                          <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perjam.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text>
                         }
+                        {/* <Text style={{ marginLeft:8 , fontWeight:'bold'}}>Rp.{total_harga_perhari.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')},-</Text> */}
                       </View>
-                      {/* {alat &&
-                        alat.map((item, idx) => {
-                          const harga_sewa_perhari = total_hari * item.harga_sewa_perhari
-                          const harga_sewa_perjam = total_jam * item.harga_sewa_perjam
-                          const total = harga_sewa_perjam + harga_sewa_perhari
-                          return(
-                            <View key={idx}>
-                              <Text>{total}</Text>
-                            </View>
-                          )
-                        })
-                      } */}
                     </View>
                   </View>
                   <View style={styles.border2}/>
@@ -265,14 +272,14 @@ export default function MenuUtama({navigation}) {
                     </TouchableOpacity> */}
                     {item.ket_persetujuan_kepala_dinas == 'setuju' &&
                       <TouchableOpacity onPress={async () => {
-                        await downloadToFolder(`http://6355-180-242-234-59.ngrok.io/api/downloadDokumenSewa/${id_order}`, `dokumen_sewa_${nama_instansi}.pdf`, "Download", channelId, {
+                        await downloadToFolder(`http://e565-180-242-214-45.ngrok.io/api/downloadDokumenSewa/${id_order}`, `${id_order}.pdf`, "Download", channelId, {
                           downloadProgressCallback: downloadProgressUpdater,
                           downloadProgressCallback: ToastAndroid.show(`Sedang Mendownload, Mohon Menunggu!`, ToastAndroid.SHORT)
                           // ToastAndroid.show(`Sedang Mendownload ${downloadProgress}`, ToastAndroid.SHORT)
                         })
                       }}>
                         {/* <TouchableOpacity onPress={async () => {
-                          await downloadToFolder('http://6355-180-242-234-59.ngrok.io/api/downloadDokumenSewa/1', filename, folder, channelId)
+                          await downloadToFolder('http://e565-180-242-214-45.ngrok.io/api/downloadDokumenSewa/1', filename, folder, channelId)
                         }}> */}
                         <View style={styles.btn}>
                           <Text style={styles.buttonTitle}>Download Perjanjian Sewa</Text>
@@ -282,7 +289,7 @@ export default function MenuUtama({navigation}) {
                     {item.ttd_pemohon == '' &&
                       <TouchableOpacity onPress={() => navigation.navigate('pdfFormulirOrder', {order_id: item.id})}>
                         {/* <TouchableOpacity onPress={async () => {
-                          await downloadToFolder('http://6355-180-242-234-59.ngrok.io/api/downloadDokumenSewa/1', filename, folder, channelId)
+                          await downloadToFolder('http://e565-180-242-214-45.ngrok.io/api/downloadDokumenSewa/1', filename, folder, channelId)
                         }}> */}
                         <View style={styles.btn}>
                           <Text style={styles.buttonTitle}>Tanda Tangan Formulir</Text>
@@ -363,7 +370,7 @@ export default function MenuUtama({navigation}) {
                       style={{ margin:0 }}
                       data={data}
                       vertical
-                      key={1}
+                      // key={1}
                       numColumns={1}
                       nestedScrollEnabled
                       // fadingEdgeLength={10}
