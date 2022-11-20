@@ -26,7 +26,7 @@ export default function FormPembayaran({ navigation, route }) {
     const [isDisabled, setIsDisabled] = useState(false);
     const [detail, setDetail] = useState([]);
     const {storedCredentials, setStoredCredentials} = useContext(CredentialsContext);
-    const {nama, email, id} = storedCredentials;
+    const {nama, email, id, token} = storedCredentials;
 
     const pickBuktiPembayaran = async () => {
         // No permissions request is necessary for launching the image library
@@ -45,8 +45,13 @@ export default function FormPembayaran({ navigation, route }) {
         handleMessage(null);
         if (buktiPembayaran != null) {
           axios({
-            url:`http://6355-180-242-234-59.ngrok.io/api/payments`,
+            url:`http://48a3-2001-448a-6060-519e-4cc7-b779-fedd-d7bd.ngrok.io/api/payments`,
             method:"POST",
+            headers: {
+                //  'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer '+token,
+            },
             data:
             {
               order_id:id_order,
@@ -67,8 +72,13 @@ export default function FormPembayaran({ navigation, route }) {
 
             if (buktiPembayaran != null) {
             axios({
-                url:`http://6355-180-242-234-59.ngrok.io/api/bukti-pembayaran/${id_order}`,
+                url:`http://48a3-2001-448a-6060-519e-4cc7-b779-fedd-d7bd.ngrok.io/api/bukti-pembayaran/${id_order}`,
                 method:"POST",
+                // headers: {
+                //     //  'Accept': 'application/json',
+                //     'Content-Type': 'application/json',
+                //     'Authorization': 'Bearer '+token,
+                // },
                 data: datasBuktiPembayaran
             })
             .then((response) => {
@@ -87,7 +97,7 @@ export default function FormPembayaran({ navigation, route }) {
                 Alert.alert("Berhasil", "Upload Bukti Pembayaran Berhasil!", [
                 {
                     text:"OK",
-                    onPress: () => navigation.navigate('Penyewaan'),
+                    onPress: () => navigation.navigate("Penyewaan"),
                 },
                 ]);
                 console.log(response.data);
@@ -137,120 +147,23 @@ export default function FormPembayaran({ navigation, route }) {
 
     return (
         <>
-            <View style={{ height: '60%'}}>
+            <View style={{ height: '85%'}}>
                 <PDFReader
                     source={{
-                    uri: `http://6355-180-242-234-59.ngrok.io/api/skrPdf/${id_order}`,
+                    uri: `http://48a3-2001-448a-6060-519e-4cc7-b779-fedd-d7bd.ngrok.io/api/skrPdf/${id_order}`,
+                    headers: {
+                    //  'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '+token,
+                    }
                     }}
                 />
             </View>
-            <ScrollView style={{ paddingBottom: 16, backgroundColor:'#fff' }}>
-                <Card style={styles.card}>
-                    <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:15, borderTopRightRadius:15}}>
-                        <Text style={{ marginLeft:16, marginTop:14, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Rincian Pembayaran</Text>
-                    </View>
-                    <DataTable>
-                        <DataTable.Header>
-                        <DataTable.Title>No.</DataTable.Title>
-                        <DataTable.Title>Biaya</DataTable.Title>
-                        <DataTable.Title numeric>Total</DataTable.Title>
-                        </DataTable.Header>
-
-                        <DataTable.Row>
-                        <DataTable.Cell>1</DataTable.Cell>
-                        <DataTable.Cell>Penyewaan</DataTable.Cell>
-                        <DataTable.Cell numeric>Rp.{total_harga.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</DataTable.Cell>
-                        </DataTable.Row>
-
-                        <DataTable.Row>
-                        <DataTable.Cell>2</DataTable.Cell>
-                        <DataTable.Cell>Denda</DataTable.Cell>
-                        {Moment(date) <= Moment(teng) &&
-                            <DataTable.Cell numeric>Rp.0,-</DataTable.Cell>
-                        }
-                        {Moment(date) > Moment(teng) &&
-                            <DataTable.Cell numeric>Rp.{denda.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</DataTable.Cell>
-                        }
-                        </DataTable.Row>
-                    </DataTable>
-                    <View style={styles.border2}/>
-                    <View style={{ justifyContent:'space-between', padding: 8, flexDirection: 'row' }}>
-                        <Text>Total</Text>
-                        {Moment(date) <= Moment(teng) &&
-                            <Text>Rp.{total_harga.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
-                        }
-                        {Moment(date) > Moment(teng) &&
-                            <Text>Rp.{total_bayar.toFixed(0).replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,')},-</Text>
-                        }
-                    </View>
-                </Card>
-                <Card style={styles.card}>
-                    <View style={{ height: 48, textAlignVertical: 'center', backgroundColor: '#25185A', borderTopLeftRadius:15, borderTopRightRadius:15}}>
-                        <Text style={{ marginLeft:16, marginTop:14, textAlignVertical: 'center', fontWeight:'bold', color: '#ffffff' }}>Rincian Pembayaran</Text>
-                    </View>
-                    <View style={{ margin: 16 }}>
-                        <Text style={{ fontWeight: 'bold' }}>Selesaikan pembayaran sebelum:</Text>
-                        <Text>{Moment(tenggat).format('dddd, DD MMMM YYYY')}</Text>
-                    </View>
-                    <View style={{ margin: 16 }}>
-                        <Text style={{ fontWeight: 'bold' }}>Transfer ke:</Text>
-                        <View style={{ justifyContent: 'space-between' }}>
-                            <Text style={{ fontWeight:'bold', fontSize: 18 }}>Rekening Bank Kalbar</Text>
-                            <Text style={{ fontWeight:'bold', fontSize: 32 }}>1001013358</Text>
-                        </View>
-                    </View>
-                    <View style={{ margin: 16 }}>
-                        <Text style={{ fontWeight: 'bold' }}>Jumlah Transfer:</Text>
-                        <View style={{ justifyContent: 'space-between' }}>
-                        {Moment(date) <= Moment(teng) &&
-                            <Text style={{ fontWeight:'bold', fontSize: 32 }}>{total_harga}</Text>
-                        }
-                        {Moment(date) > Moment(teng) &&
-                            <Text style={{ fontWeight:'bold', fontSize: 32 }}>{total_bayar}</Text>
-                        }
-                        </View>
-                    </View>
-                    <View style={styles.border2}/>
-                </Card>
-                <TouchableOpacity onPress={pickBuktiPembayaran}>
-                    <View style={{ margin: 16, height: 120, backgroundColor: '#fff', padding: 4, borderRadius: 20, borderColor: '#6C6B6B', borderWidth:2 }}>
-                        <View style={{height: 40, width: '100%', flexDirection:'row', justifyContent:'center', alignItems:'center', flex:1}}>
-                            <Image source={Add} style={{ width: 45, height: 45 }}/>
-                            {/* {ktp &&
-                            <Text>{ktp, datasKtp}</Text>
-                            } */}
-                            <View style={{ width:'80%' }}>
-                                <Text style={{ fontSize:18, fontWeight: 'bold', marginLeft: 16 }}>Bukti Pembayaran</Text>
-                                <Text style={{ marginLeft: 16, fontSize: 14, fontWeight: 'bold' }}>Tap disini pilih file dari perangkat Anda</Text>
-                                <Text style={{ marginLeft: 16, fontSize:11 }}>Pastikan format file dalam bentuk png/jpg/jpeg/pdf !</Text>
-                            </View>
-                        </View>
-                    </View>
-                </TouchableOpacity>
-                <TouchableOpacity style={{ marginBottom: 16 }} onPress={(e) =>
-                    {
-                        letHide(e),
-                        doYourTask(e),
-                        handlePembayaran(e)
-                    }
-                    }
-                    disabled={isDisabled}
-                >
-                    {visible == true &&
-                        <ActivityIndicator
-                        size="large"
-                        color="#00B8D4"
-                        animating={visible}
-                        style={{ marginBottom: 20 }}
-                        />
-                    }
-                    {visible == false &&
-                        <View style={styles.button}>
-                        <Text style={styles.buttonTitle}>SIMPAN</Text>
-                        </View>
-                    }
-                </TouchableOpacity>
-            </ScrollView>
+            <TouchableOpacity onPress={() => navigation.navigate('SKR', {id_order: id_order, skr: data.skr, dateSkr: data.created_at, total_harga: total_harga})} style={{ margin: 16 }}>
+            <View style={styles.button}>
+                <Text style={styles.buttonTitle}>LANJUTKAN PEMBAYARAN</Text>
+            </View>
+            </TouchableOpacity>
         </>
     )
 }
