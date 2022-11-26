@@ -49,6 +49,11 @@
           "cameraPermission": "The app accesses your camera to let you share them with your friends."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4d8e3c8c-5290-4be8-b8e1-7f7aa10aa4b8"
+      }
+    }
   }
 }

@@ -32,7 +32,7 @@ import {
   NotificationChannelInput,
   NotificationContentInput,
 } from "expo-notifications";
-import { downloadToFolder } from "expo-file-dl";
+// import { downloadToFolder } from "expo-file-dl";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
