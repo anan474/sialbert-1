@@ -26,8 +26,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Card } from "react-native-paper";
 import Moment from "moment";
 import { Picker } from "@react-native-picker/picker";
-// import { downloadToFolder } from 'expo-file-dl';
-// import { Constants } from 'react-native-unimodules';
 import ActivityIndicatorExample from "../components/ActivityIndicatorExample";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CredentialsContext } from "../components/CredentialsContext";
@@ -50,7 +48,6 @@ import {
   NotificationChannelInput,
   NotificationContentInput,
 } from "expo-notifications";
-// import { downloadToFolder } from "expo-file-dl";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

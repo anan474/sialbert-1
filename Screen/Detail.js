@@ -20,8 +20,6 @@ import Moment from "moment";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CartContext } from "./../components/CartContext";
 import { Calendar, CalendarList, Agenda } from "react-native-calendars";
-// import { Calendar } from 'react-native-calendario';
-import DateRangePicker from "rnv-date-range-picker";
 let { width } = Dimensions.get("window");
 import { useIsFocused } from "@react-navigation/native";
 import { CartIcon } from "./../components/CartIcon.js";
